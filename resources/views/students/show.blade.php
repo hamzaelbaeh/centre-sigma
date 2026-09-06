@@ -7,7 +7,8 @@
 </div>
 <div class="grid grid-2">
 <div class="card">
- <p><strong>{{ __('Classe:') }}</strong> {{ $student->schoolClass?->nom }}</p>
+ <p><strong>{{ __('Niveau scolaire:') }}</strong> {{ $student->niveau_scolaire ? __($student->niveau_scolaire) : '—' }}</p>
+ <p><strong>{{ __('Classe:') }}</strong> {{ $student->schoolClass?->nom ?: '—' }}</p>
  <p><strong>{{ __('Naissance:') }}</strong> {{ optional($student->date_naissance)->format('d/m/Y') }} — {{ $student->lieu_naissance }}</p>
  <p><strong>{{ __('Sexe:') }}</strong> {{ $student->sexe }} · <strong>{{ __('CIN:') }}</strong> {{ $student->cin }}</p>
  <p><strong>{{ __('Tél:') }}</strong> {{ $student->telephone }} · <strong>{{ __('Email:') }}</strong> {{ $student->email }}</p>

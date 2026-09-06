@@ -6,7 +6,7 @@
 @foreach($classes as $c)
 <div class="card class-card">
  <h2>{{ $c->nom }}</h2>
- <p class="muted">{{ $c->niveau }} · {{ __('Salle') }} {{ $c->salle ?: '—' }}</p>
+ <p class="muted">{{ $c->niveau }} · {{ __('Salle') }} {{ $c->room?->nom ?? ($c->salle ?: '—') }}</p>
  <p><strong>{{ $c->occupancy }}</strong> / {{ $c->capacite ?? '—' }} {{ __('places') }}</p>
  <p>{{ __('Enseignant principal :') }} {{ $c->teacher?->full_name ?: '—' }}</p>
  <div class="actions" style="margin-top:10px">

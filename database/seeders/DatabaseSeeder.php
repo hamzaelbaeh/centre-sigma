@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Models\Fee;
+use App\Models\Room;
 use App\Models\ParentGuardian;
 use App\Models\Payment;
 use App\Models\PaymentTransaction;
@@ -67,6 +68,11 @@ class DatabaseSeeder extends Seeder
             ]);
         }
 
+        $roomModels = [];
+        foreach (['قاعة 1', 'قاعة 2', 'قاعة 3', 'قاعة 4'] as $roomNom) {
+            $roomModels[] = Room::firstOrCreate(['nom' => $roomNom], ['capacite' => null, 'actif' => true]);
+        }
+
         $classesData = [
             ['1ère primaire','Primaire','Salle A',0,30],
             ['2ème & 3ème primaire','Primaire','Salle B',1,30],
@@ -75,8 +81,9 @@ class DatabaseSeeder extends Seeder
         ];
         $classes = [];
         foreach ($classesData as $i => [$nom,$niv,$salle,$ti,$cap]) {
+            $room = $roomModels[$i % 4];
             $classes[] = SchoolClass::create([
-                'nom'=>$nom,'niveau'=>$niv,'salle'=>$salle,
+                'nom'=>$nom,'niveau'=>$niv,'salle'=>$room->nom,'room_id'=>$room->id,
                 'teacher_id'=>$teachers[$ti]->id,'capacite'=>$cap,'school_year_id'=>$year->id,
             ]);
         }

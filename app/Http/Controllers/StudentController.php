@@ -50,6 +50,7 @@ class StudentController extends Controller
             'telephone' => 'nullable|string',
             'email' => 'nullable|email',
             'adresse' => 'nullable|string',
+            'niveau_scolaire' => 'nullable|string|in:'.implode(',', \App\Models\Student::NIVEAUX_SCOLAIRES),
             'class_id' => 'nullable|exists:classes,id',
             'date_inscription' => 'nullable|date',
             'statut' => 'nullable|string',
@@ -117,6 +118,7 @@ class StudentController extends Controller
             'telephone' => 'nullable|string',
             'email' => 'nullable|email',
             'adresse' => 'nullable|string',
+            'niveau_scolaire' => 'nullable|string|in:'.implode(',', \App\Models\Student::NIVEAUX_SCOLAIRES),
             'class_id' => 'nullable|exists:classes,id',
             'date_inscription' => 'nullable|date',
             'statut' => 'nullable|string',
@@ -279,5 +281,43 @@ class StudentController extends Controller
             $sync[$id] = ['prix' => $prix];
         }
         $student->subjects()->sync($sync);
+    }
+
+    /**
+     * Create first mensualité from enrolled subject prices and optional initial payment.
+     */
+    private function createInitialMensualite(Student $student, string $paymentStatut, $paymentPaye): void
+    {
+        $montant = $student->monthlyFeeAmount();
+        if ($montant <= 0) {
+            return;
+        }
+        $periode = now()->format('Y-m');
+        $paye = 0.0;
+        if ($paymentStatut === 'Soldé') {
+            $paye = $montant;
+        } elseif ($paymentStatut === 'Partiel') {
+            $paye = min((float) $paymentPaye, $montant);
+        }
+        $statut = $paye <= 0 ? 'Non payé' : ($paye >= $montant ? 'Soldé' : 'Partiel');
+
+        $payment = Payment::create([
+            'student_id' => $student->id,
+            'type' => 'Mensualité',
+            'montant' => $montant,
+            'paye' => $paye,
+            'periode' => $periode,
+            'statut' => $statut,
+            'school_year_id' => $student->school_year_id,
+        ]);
+
+        if ($paye > 0) {
+            PaymentTransaction::create([
+                'payment_id' => $payment->id,
+                'date' => now()->toDateString(),
+                'montant' => $paye,
+                'mode' => 'Espèces',
+            ]);
+        }
     }
 }

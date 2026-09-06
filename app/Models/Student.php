@@ -7,9 +7,26 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Student extends Model
 {
+    /** Stable stored values for academic level (translated in lang files). */
+    public const NIVEAUX_SCOLAIRES = [
+        '1ère année primaire',
+        '2ème année primaire',
+        '3ème année primaire',
+        '4ème année primaire',
+        '5ème année primaire',
+        '6ème année primaire',
+        '1ère année collège',
+        '2ème année collège',
+        '3ème année collège',
+        'Tronc commun',
+        '1ère bac',
+        '2ème bac',
+        'Non scolarisé',
+    ];
+
     protected $fillable = [
         'matricule','nom','prenom','date_naissance','lieu_naissance','sexe','cin','telephone',
-        'email','adresse','class_id','date_inscription','statut','code_massar','photo','school_year_id',
+        'email','adresse','niveau_scolaire','class_id','date_inscription','statut','code_massar','photo','school_year_id',
     ];
     protected function casts(): array
     {

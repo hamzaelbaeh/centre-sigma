@@ -25,8 +25,21 @@
 </div>
 <div class="form-group"><label>{{ __('Adresse') }}</label><textarea class="form-input" style="width:100%" name="adresse" rows="2">{{ old('adresse', $student->adresse ?? '') }}</textarea></div>
 <div class="form-row">
- <div class="form-group"><label>{{ __('Classe') }}</label><select class="form-select" style="width:100%" name="class_id"><option value="">—</option>@foreach($classes as $c)<option value="{{ $c->id }}" @selected(old('class_id', $student->class_id ?? '')==$c->id)>{{ $c->nom }}</option>@endforeach</select></div>
+ <div class="form-group">
+  <label>{{ __('Niveau scolaire') }}</label>
+  <select class="form-select" style="width:100%" name="niveau_scolaire">
+    <option value="">—</option>
+    @foreach(\App\Models\Student::NIVEAUX_SCOLAIRES as $niv)
+      <option value="{{ $niv }}" @selected(old('niveau_scolaire', $student->niveau_scolaire ?? '')==$niv)>{{ __($niv) }}</option>
+    @endforeach
+  </select>
+ </div>
  <div class="form-group"><label>{{ __("Date d'inscription") }}</label><input class="form-input" style="width:100%" type="date" name="date_inscription" value="{{ old('date_inscription', optional($student->date_inscription ?? null)->format('Y-m-d')) }}"></div>
+</div>
+<div class="form-group">
+  <label>{{ __('Classe') }} <span class="muted">({{ __('optionnel') }})</span></label>
+  <select class="form-select" style="width:100%" name="class_id"><option value="">—</option>@foreach($classes as $c)<option value="{{ $c->id }}" @selected(old('class_id', $student->class_id ?? '')==$c->id)>{{ $c->nom }}</option>@endforeach</select>
+  <div class="sub">{{ __('يتم توزيع التلاميذ على الأقسام يدوياً من صفحة الأقسام') }}</div>
 </div>
 <div class="form-row">
  <div class="form-group"><label>{{ __('Statut') }}</label><select class="form-select" style="width:100%" name="statut">@foreach(['Actif','Suspendu','Transféré','Abandonné','Diplômé','Exclu'] as $s)<option value="{{ $s }}" @selected(old('statut', $student->statut ?? 'Actif')==$s)>{{ __($s) }}</option>@endforeach</select></div>

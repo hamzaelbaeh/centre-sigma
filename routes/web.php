@@ -47,6 +47,7 @@ Route::middleware('auth')->group(function () {
     Route::resource('students', StudentController::class);
     Route::resource('parents', ParentController::class)->except(['show']);
     Route::resource('classes', ClassController::class);
+    Route::post('classes/{class}/students', [ClassController::class, 'syncStudents'])->name('classes.students.sync');
     Route::resource('teachers', TeacherController::class)->except(['show']);
     Route::resource('subjects', SubjectController::class)->except(['show']);
 
