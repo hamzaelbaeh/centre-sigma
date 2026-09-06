@@ -187,6 +187,42 @@ body[dir="rtl"] .sidebar {
   margin-left: 0 !important;
   margin-right: var(--sidebar-w) !important;
 }
+/* Sidebar inner text flush to the far right in Arabic */
+.sidebar.is-rtl,
+html[dir="rtl"] .sidebar,
+body[dir="rtl"] .sidebar {
+  direction: rtl;
+  text-align: right;
+}
+.sidebar.is-rtl .sidebar-brand,
+html[dir="rtl"] .sidebar .sidebar-brand {
+  flex-direction: row; /* logo at inline-start = right */
+  justify-content: flex-start;
+  text-align: right;
+}
+.sidebar.is-rtl .sidebar-brand .titles,
+html[dir="rtl"] .sidebar .sidebar-brand .titles {
+  text-align: right;
+}
+.sidebar.is-rtl .nav-group-title,
+html[dir="rtl"] .sidebar .nav-group-title {
+  text-align: right;
+  padding-right: 10px;
+  padding-left: 10px;
+}
+.sidebar.is-rtl .nav-link,
+html[dir="rtl"] .sidebar .nav-link {
+  flex-direction: row; /* icon at right edge, label to its left */
+  justify-content: flex-start;
+  text-align: right;
+  direction: rtl;
+}
+.sidebar.is-rtl .sidebar-footer,
+html[dir="rtl"] .sidebar .sidebar-footer {
+  text-align: right;
+  direction: rtl;
+}
+
 html[dir="rtl"] .main,
 body[dir="rtl"] .main {
   margin-left: 0 !important;
@@ -201,9 +237,7 @@ html[dir="rtl"] .page-head,
 html[dir="rtl"] .actions,
 html[dir="rtl"] .filters,
 html[dir="rtl"] .user-chip,
-html[dir="rtl"] .lang-toggle,
-html[dir="rtl"] .sidebar-brand,
-html[dir="rtl"] .nav-link {
+html[dir="rtl"] .lang-toggle {
   flex-direction: row-reverse;
 }
 html[dir="rtl"] .nav-group-title,
