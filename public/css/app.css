@@ -165,17 +165,22 @@ table.data tr:hover td { background:#f8fafc; }
   .content { padding:0; }
 }
 
-/* RTL (Arabic) */
+/* RTL (Arabic) — sidebar on the right */
+html[dir=rtl] body,
+[dir=rtl] body {
+  direction: rtl;
+}
 [dir=rtl] .sidebar {
-  left: auto;
-  right: 0;
+  left: unset !important;
+  right: 0 !important;
 }
 [dir=rtl] .main {
-  margin-left: 0;
-  margin-right: var(--sidebar-w);
+  margin-left: 0 !important;
+  margin-right: var(--sidebar-w) !important;
 }
 [dir=rtl] .topbar {
   flex-direction: row-reverse;
+  justify-content: flex-start;
 }
 [dir=rtl] .page-head,
 [dir=rtl] .actions,
@@ -194,12 +199,18 @@ table.data tr:hover td { background:#f8fafc; }
 [dir=rtl] .form-group label,
 [dir=rtl] .stat-label,
 [dir=rtl] table.data th,
-[dir=rtl] table.data td {
+[dir=rtl] table.data td,
+[dir=rtl] .card,
+[dir=rtl] .login-card {
   text-align: right;
 }
 [dir=rtl] .alert ul {
   padding-right: 18px;
   padding-left: 0;
+}
+[dir=rtl] .nav-group-title {
+  letter-spacing: 0;
+  text-transform: none;
 }
 a.lang-btn {
   display: inline-flex;
@@ -216,5 +227,6 @@ a.lang-btn.active {
   background: #fffbeb;
 }
 @media (max-width: 700px) {
-  [dir=rtl] .main { margin-right: 0; }
+  [dir=rtl] .main { margin-right: 0 !important; }
+  [dir=rtl] .sidebar { right: 0; left: unset; }
 }

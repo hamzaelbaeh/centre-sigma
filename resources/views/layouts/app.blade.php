@@ -15,7 +15,7 @@
     </style>
     @stack('styles')
 </head>
-<body>
+@if(app()->getLocale()==='ar')<body dir="rtl">@else<body>@endif
 @php
     $yearLabel = $activeYear->nom ?? '2026/2027';
     $locale = app()->getLocale();
