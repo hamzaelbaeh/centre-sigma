@@ -4,7 +4,7 @@
 <div class="page-head"><div><h1>Paiements élèves</h1></div>
 <div class="actions">
 <a class="btn btn-outline" href="{{ route('payments.impayes') }}">État des impayés</a>
-<a class="btn btn-ghost" href="#">Excel</a>
+<a class="btn btn-ghost" href="{{ route('payments.export', request()->query()) }}">{{ __('Excel') }}</a>
 <form method="POST" action="{{ route('payments.generate') }}">@csrf
 <input type="hidden" name="periode" value="{{ $periode }}">
 <button class="btn btn-gold" type="submit">Générer les mensualités</button>

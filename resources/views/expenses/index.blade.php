@@ -2,7 +2,7 @@
 @section('title','Dépenses')
 @section('content')
 <div class="page-head"><div><h1>Dépenses</h1></div>
-<div class="actions"><button class="btn btn-ghost" onclick="window.print()">Imprimer</button><a class="btn btn-ghost" href="#">Excel</a><a class="btn btn-gold" href="{{ route('expenses.create') }}">Nouvelle dépense</a></div></div>
+<div class="actions"><button class="btn btn-ghost" onclick="window.print()">Imprimer</button><a class="btn btn-ghost" href="{{ route('expenses.export', request()->query()) }}">{{ __('Excel') }}</a><a class="btn btn-gold" href="{{ route('expenses.create') }}">Nouvelle dépense</a></div></div>
 <form class="filters card" method="GET"><input type="month" name="periode" value="{{ $periode }}"><input name="q" value="{{ request('q') }}" placeholder="Rechercher"><button class="btn btn-gold">Filtrer</button></form>
 <div class="card table-wrap"><table class="data">
 <thead><tr><th>DATE</th><th>CATÉGORIE</th><th>FOURNISSEUR</th><th>DESCRIPTION</th><th>MONTANT</th><th>MODE</th><th>ACTIONS</th></tr></thead>

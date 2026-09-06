@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="{{ app()->getLocale() }}" @if(app()->getLocale()==='ar') dir="rtl" @endif>
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -18,37 +18,38 @@
 <body>
 @php
     $yearLabel = $activeYear->nom ?? '2026/2027';
+    $locale = app()->getLocale();
     $nav = [
         ['group' => null, 'items' => [
-            ['route'=>'dashboard','label'=>'Tableau de bord','match'=>'dashboard'],
+            ['route'=>'dashboard','label'=>__('Tableau de bord'),'match'=>'dashboard'],
         ]],
-        ['group' => 'SCOLAIRE', 'items' => [
-            ['route'=>'students.index','label'=>'Élèves','match'=>'students.*'],
-            ['route'=>'parents.index','label'=>'Parents / Tuteurs','match'=>'parents.*'],
-            ['route'=>'classes.index','label'=>'Classes','match'=>'classes.*'],
-            ['route'=>'teachers.index','label'=>'Enseignants','match'=>'teachers.*'],
-            ['route'=>'subjects.index','label'=>'Matières','match'=>'subjects.*'],
-            ['route'=>'timetable.index','label'=>'Emploi du temps','match'=>'timetable.*'],
-            ['route'=>'attendance.index','label'=>'Présences','match'=>'attendance.*'],
+        ['group' => __('SCOLAIRE'), 'items' => [
+            ['route'=>'students.index','label'=>__('Élèves'),'match'=>'students.*'],
+            ['route'=>'parents.index','label'=>__('Parents / Tuteurs'),'match'=>'parents.*'],
+            ['route'=>'classes.index','label'=>__('Classes'),'match'=>'classes.*'],
+            ['route'=>'teachers.index','label'=>__('Enseignants'),'match'=>'teachers.*'],
+            ['route'=>'subjects.index','label'=>__('Matières'),'match'=>'subjects.*'],
+            ['route'=>'timetable.index','label'=>__('Emploi du temps'),'match'=>'timetable.*'],
+            ['route'=>'attendance.index','label'=>__('Présences'),'match'=>'attendance.*'],
         ]],
-        ['group' => 'FINANCES', 'items' => [
-            ['route'=>'payments.index','label'=>'Paiements élèves','match'=>'payments.*'],
-            ['route'=>'fees.index','label'=>'Config. frais','match'=>'fees.*'],
-            ['route'=>'payroll_teachers.index','label'=>'Paie enseignants','match'=>'payroll_teachers.*'],
-            ['route'=>'staff.index','label'=>'Employés admin.','match'=>'staff.*'],
-            ['route'=>'staff_payroll.index','label'=>'Paie employés','match'=>'staff_payroll.*'],
-            ['route'=>'expenses.index','label'=>'Dépenses','match'=>'expenses.*'],
+        ['group' => __('FINANCES'), 'items' => [
+            ['route'=>'payments.index','label'=>__('Paiements élèves'),'match'=>'payments.*'],
+            ['route'=>'fees.index','label'=>__('Config. frais'),'match'=>'fees.*'],
+            ['route'=>'payroll_teachers.index','label'=>__('Paie enseignants'),'match'=>'payroll_teachers.*'],
+            ['route'=>'staff.index','label'=>__('Employés admin.'),'match'=>'staff.*'],
+            ['route'=>'staff_payroll.index','label'=>__('Paie employés'),'match'=>'staff_payroll.*'],
+            ['route'=>'expenses.index','label'=>__('Dépenses'),'match'=>'expenses.*'],
         ]],
-        ['group' => 'GESTION', 'items' => [
-            ['route'=>'departures.index','label'=>'Élèves sortants','match'=>'departures.*'],
-            ['route'=>'trainings.index','label'=>'Formations','match'=>'trainings.*'],
-            ['route'=>'years.index','label'=>'Années scolaires','match'=>'years.*'],
+        ['group' => __('GESTION'), 'items' => [
+            ['route'=>'departures.index','label'=>__('Élèves sortants'),'match'=>'departures.*'],
+            ['route'=>'trainings.index','label'=>__('Formations'),'match'=>'trainings.*'],
+            ['route'=>'years.index','label'=>__('Années scolaires'),'match'=>'years.*'],
         ]],
-        ['group' => 'SYSTÈME', 'items' => [
-            ['route'=>'documents.index','label'=>'Documents','match'=>'documents.*'],
-            ['route'=>'reports.index','label'=>'Rapports','match'=>'reports.*'],
-            ['route'=>'users.index','label'=>'Utilisateurs','match'=>'users.*'],
-            ['route'=>'settings.index','label'=>'Paramètres','match'=>'settings.*'],
+        ['group' => __('SYSTÈME'), 'items' => [
+            ['route'=>'documents.index','label'=>__('Documents'),'match'=>'documents.*'],
+            ['route'=>'reports.index','label'=>__('Rapports'),'match'=>'reports.*'],
+            ['route'=>'users.index','label'=>__('Utilisateurs'),'match'=>'users.*'],
+            ['route'=>'settings.index','label'=>__('Paramètres'),'match'=>'settings.*'],
         ]],
     ];
 @endphp
@@ -81,14 +82,14 @@
                 </div>
             @endforeach
         </nav>
-        <div class="sidebar-footer">Année scolaire {{ $yearLabel }}</div>
+        <div class="sidebar-footer">{{ __('Année scolaire') }} {{ $yearLabel }}</div>
     </aside>
     <div class="main">
         <header class="topbar">
             <span class="pill gold">{{ $yearLabel }}</span>
             <div class="lang-toggle">
-                <button type="button" class="lang-btn active" title="Français">FR</button>
-                <button type="button" class="lang-btn" title="العربية">AR</button>
+                <a href="{{ route('locale.switch', 'fr') }}" class="lang-btn {{ $locale==='fr' ? 'active' : '' }}" title="Français">FR</a>
+                <a href="{{ route('locale.switch', 'ar') }}" class="lang-btn {{ $locale==='ar' ? 'active' : '' }}" title="العربية">AR</a>
             </div>
             <div class="user-chip">
                 <div class="avatar">{{ strtoupper(substr(auth()->user()->name ?? 'A',0,1)) }}</div>
@@ -98,7 +99,7 @@
                 </div>
                 <form method="POST" action="{{ route('logout') }}" style="margin:0 0 0 6px">
                     @csrf
-                    <button class="btn btn-sm btn-ghost" type="submit">Quitter</button>
+                    <button class="btn btn-sm btn-ghost" type="submit">{{ __('Quitter') }}</button>
                 </form>
             </div>
         </header>

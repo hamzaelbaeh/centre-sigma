@@ -7,6 +7,8 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DepartureController;
 use App\Http\Controllers\DocumentController;
 use App\Http\Controllers\ExpenseController;
+use App\Http\Controllers\ExportController;
+use App\Http\Controllers\LocaleController;
 use App\Http\Controllers\FeeController;
 use App\Http\Controllers\ParentController;
 use App\Http\Controllers\PaymentController;
@@ -24,12 +26,23 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\YearController;
 use Illuminate\Support\Facades\Route;
 
+Route::get('/locale/{lang}', [LocaleController::class, 'switch'])->name('locale.switch');
+
 Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
 Route::middleware('auth')->group(function () {
     Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
+
+    Route::get('students/export', [ExportController::class, 'students'])->name('students.export');
+    Route::get('students/import/template', [StudentController::class, 'importTemplate'])->name('students.import.template');
+    Route::get('students/import', [StudentController::class, 'importForm'])->name('students.import');
+    Route::post('students/import', [StudentController::class, 'importStore'])->name('students.import.store');
+    Route::get('teachers/export', [ExportController::class, 'teachers'])->name('teachers.export');
+    Route::get('expenses/export', [ExportController::class, 'expenses'])->name('expenses.export');
+    Route::get('payments/export', [ExportController::class, 'payments'])->name('payments.export');
+    Route::get('reports/export', [ExportController::class, 'reports'])->name('reports.export');
 
     Route::resource('students', StudentController::class);
     Route::resource('parents', ParentController::class)->except(['show']);

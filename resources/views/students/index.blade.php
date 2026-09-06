@@ -5,8 +5,8 @@
  <div><h1>Élèves</h1><div class="sub">Gestion des élèves</div></div>
  <div class="actions">
   <button type="button" class="btn btn-ghost" onclick="window.print()">Imprimer</button>
-  <a class="btn btn-ghost" href="#">Excel</a>
-  <a class="btn btn-ghost" href="#">Importer</a>
+  <a class="btn btn-ghost" href="{{ route('students.export', request()->query()) }}">{{ __('Excel') }}</a>
+  <a class="btn btn-ghost" href="{{ route('students.import') }}">{{ __('Importer') }}</a>
   <a class="btn btn-gold" href="{{ route('students.create') }}">Nouvel élève</a>
  </div>
 </div>

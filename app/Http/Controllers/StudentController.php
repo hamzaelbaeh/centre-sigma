@@ -116,4 +116,117 @@ class StudentController extends Controller
         $student->delete();
         return redirect()->route('students.index')->with('success', 'Élève supprimé.');
     }
+
+    public function importForm()
+    {
+        return view('students.import');
+    }
+
+    public function importTemplate()
+    {
+        $headers = [
+            'nom', 'prenom', 'date_naissance', 'sexe', 'telephone', 'email',
+            'adresse', 'classe', 'statut', 'code_massar',
+        ];
+        return response()->streamDownload(function () use ($headers) {
+            $out = fopen('php://output', 'w');
+            fwrite($out, "\xEF\xBB\xBF");
+            fputcsv($out, $headers, ';');
+            fputcsv($out, [
+                'Alaoui', 'Sara', '2012-05-14', 'F', '0600000000', 'sara@example.com',
+                'Casablanca', '6ème A', 'Actif', 'M123456',
+            ], ';');
+            fclose($out);
+        }, 'modele-eleves.csv', [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+        ]);
+    }
+
+    public function importStore(Request $request)
+    {
+        $request->validate([
+            'file' => 'required|file|mimes:csv,txt|max:5120',
+        ]);
+
+        $path = $request->file('file')->getRealPath();
+        $handle = fopen($path, 'r');
+        if ($handle === false) {
+            return back()->withErrors(['file' => 'Impossible de lire le fichier.']);
+        }
+
+        $first = fgets($handle);
+        if ($first === false) {
+            fclose($handle);
+            return back()->withErrors(['file' => 'Fichier vide.']);
+        }
+        // Strip UTF-8 BOM
+        $first = preg_replace('/^\xEF\xBB\xBF/', '', $first);
+        $delimiter = substr_count($first, ';') >= substr_count($first, ',') ? ';' : ',';
+        $headers = str_getcsv(trim($first), $delimiter);
+        $headers = array_map(fn ($h) => strtolower(trim($h)), $headers);
+
+        $created = 0;
+        $updated = 0;
+        $yearId = SchoolYear::active()?->id;
+        $classes = SchoolClass::all()->keyBy(fn ($c) => mb_strtolower(trim($c->nom)));
+
+        while (($row = fgetcsv($handle, 0, $delimiter)) !== false) {
+            if (count(array_filter($row, fn ($v) => $v !== null && trim((string)$v) !== '')) === 0) {
+                continue;
+            }
+            $data = [];
+            foreach ($headers as $i => $key) {
+                $data[$key] = isset($row[$i]) ? trim((string) $row[$i]) : null;
+            }
+
+            $nom = $data['nom'] ?? null;
+            $prenom = $data['prenom'] ?? null;
+            if (!$nom || !$prenom) {
+                continue;
+            }
+
+            $payload = [
+                'nom' => $nom,
+                'prenom' => $prenom,
+                'date_naissance' => !empty($data['date_naissance']) ? $data['date_naissance'] : null,
+                'sexe' => !empty($data['sexe']) ? strtoupper(substr($data['sexe'], 0, 1)) : null,
+                'telephone' => $data['telephone'] ?? null,
+                'email' => $data['email'] ?? null,
+                'adresse' => $data['adresse'] ?? null,
+                'statut' => $data['statut'] ?? 'Actif',
+                'code_massar' => $data['code_massar'] ?? null,
+            ];
+            if (!empty($data['classe'])) {
+                $cls = $classes->get(mb_strtolower(trim($data['classe'])));
+                if ($cls) {
+                    $payload['class_id'] = $cls->id;
+                }
+            }
+
+            $student = null;
+            if (!empty($data['matricule'])) {
+                $student = Student::where('matricule', $data['matricule'])->first();
+            }
+            if (!$student) {
+                $student = Student::where('nom', $nom)->where('prenom', $prenom)->first();
+            }
+
+            if ($student) {
+                $student->update($payload);
+                $updated++;
+            } else {
+                $payload['matricule'] = !empty($data['matricule'])
+                    ? $data['matricule']
+                    : 'EL'.str_pad((string) (Student::max('id') + 1), 5, '0', STR_PAD_LEFT);
+                $payload['school_year_id'] = $yearId;
+                $payload['date_inscription'] = now()->toDateString();
+                Student::create($payload);
+                $created++;
+            }
+        }
+        fclose($handle);
+
+        return redirect()->route('students.index')
+            ->with('success', "Import terminé : {$created} créé(s), {$updated} mis à jour.");
+    }
 }

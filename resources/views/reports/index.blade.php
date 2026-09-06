@@ -2,7 +2,7 @@
 @section('title','Rapports')
 @section('content')
 <div class="page-head"><div><h1>Rapports</h1></div>
-<div class="actions"><button class="btn btn-ghost" onclick="window.print()">Imprimer</button><a class="btn btn-ghost" href="#">Excel</a></div></div>
+<div class="actions"><button class="btn btn-ghost" onclick="window.print()">Imprimer</button><a class="btn btn-ghost" href="{{ route('reports.export', ['tab' => $tab, 'periode' => $periode]) }}">{{ __('Excel') }}</a></div></div>
 <form class="filters card" method="GET">
 <input type="month" name="periode" value="{{ $periode }}">
 <input type="hidden" name="tab" value="{{ $tab }}">
