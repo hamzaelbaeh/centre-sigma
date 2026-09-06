@@ -1,0 +1,3 @@
+step1 create mysql
+step2 upload
+step3 public folder
