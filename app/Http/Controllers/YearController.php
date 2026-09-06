@@ -26,7 +26,7 @@ class YearController extends Controller
             'nom'=>'required|string','date_debut'=>'nullable|date','date_fin'=>'nullable|date',
         ]);
         SchoolYear::create($data);
-        return back()->with('success','Année scolaire créée.');
+        return back()->with('success',__('Année scolaire créée.'));
     }
 
     public function update(Request $request, SchoolYear $year)
@@ -35,20 +35,20 @@ class YearController extends Controller
             'nom'=>'required|string','date_debut'=>'nullable|date','date_fin'=>'nullable|date',
         ]);
         $year->update($data);
-        return back()->with('success','Année mise à jour.');
+        return back()->with('success',__('Année mise à jour.'));
     }
 
     public function activate(SchoolYear $year)
     {
         SchoolYear::query()->update(['is_active'=>false]);
         $year->update(['is_active'=>true]);
-        return back()->with('success','Année activée. Les données des autres années sont conservées.');
+        return back()->with('success',__('Année activée. Les données des autres années sont conservées.'));
     }
 
     public function destroy(SchoolYear $year)
     {
         if ($year->is_active) return back()->withErrors(['error'=>'Impossible de supprimer l\'année active.']);
         $year->delete();
-        return back()->with('success','Année supprimée.');
+        return back()->with('success',__('Année supprimée.'));
     }
 }

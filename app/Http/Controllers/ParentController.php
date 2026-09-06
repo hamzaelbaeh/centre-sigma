@@ -42,7 +42,7 @@ class ParentController extends Controller
         unset($data['students']);
         $parent = ParentGuardian::create($data);
         $parent->students()->sync($students);
-        return redirect()->route('parents.index')->with('success', 'Parent créé.');
+        return redirect()->route('parents.index')->with('success', __('Parent créé.'));
     }
 
     public function edit(ParentGuardian $parent)
@@ -68,12 +68,12 @@ class ParentController extends Controller
         unset($data['students']);
         $parent->update($data);
         $parent->students()->sync($students);
-        return redirect()->route('parents.index')->with('success', 'Parent mis à jour.');
+        return redirect()->route('parents.index')->with('success', __('Parent mis à jour.'));
     }
 
     public function destroy(ParentGuardian $parent)
     {
         $parent->delete();
-        return redirect()->route('parents.index')->with('success', 'Parent supprimé.');
+        return redirect()->route('parents.index')->with('success', __('Parent supprimé.'));
     }
 }

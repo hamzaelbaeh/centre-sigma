@@ -94,7 +94,7 @@
             <div class="user-chip">
                 <div class="avatar">{{ strtoupper(substr(auth()->user()->name ?? 'A',0,1)) }}</div>
                 <div style="font-size:12.5px;line-height:1.2">
-                    <strong>{{ auth()->user()->name ?? 'Administrateur' }}</strong><br>
+                    <strong>{{ auth()->user()->name ?? __('Administrateur') }}</strong><br>
                     <span class="muted">{{ auth()->user()->role ?? '' }}</span>
                 </div>
                 <form method="POST" action="{{ route('logout') }}" style="margin:0 0 0 6px">

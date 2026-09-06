@@ -35,6 +35,6 @@ class FeeController extends Controller
                 ]
             );
         }
-        return back()->with('success', 'Frais enregistrés.');
+        return back()->with('success', __('Frais enregistrés.'));
     }
 }

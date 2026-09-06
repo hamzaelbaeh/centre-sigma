@@ -39,12 +39,12 @@ class DepartureController extends Controller
         }
         $data['solde_du'] = $solde;
         Departure::create($data);
-        return redirect()->route('departures.index')->with('success','Départ enregistré. Historique conservé.');
+        return redirect()->route('departures.index')->with('success',__('Départ enregistré. Historique conservé.'));
     }
 
     public function destroy(Departure $departure)
     {
         $departure->delete();
-        return back()->with('success','Enregistrement de départ retiré.');
+        return back()->with('success',__('Enregistrement de départ retiré.'));
     }
 }

@@ -65,7 +65,7 @@ class StudentController extends Controller
         unset($data['parents']);
         $student = Student::create($data);
         $student->parents()->sync($parents);
-        return redirect()->route('students.index')->with('success', 'Élève créé avec succès.');
+        return redirect()->route('students.index')->with('success', __('Élève créé avec succès.'));
     }
 
     public function show(Student $student)
@@ -108,13 +108,13 @@ class StudentController extends Controller
         unset($data['parents']);
         $student->update($data);
         $student->parents()->sync($parents);
-        return redirect()->route('students.index')->with('success', 'Élève mis à jour.');
+        return redirect()->route('students.index')->with('success', __('Élève mis à jour.'));
     }
 
     public function destroy(Student $student)
     {
         $student->delete();
-        return redirect()->route('students.index')->with('success', 'Élève supprimé.');
+        return redirect()->route('students.index')->with('success', __('Élève supprimé.'));
     }
 
     public function importForm()
@@ -227,6 +227,6 @@ class StudentController extends Controller
         fclose($handle);
 
         return redirect()->route('students.index')
-            ->with('success', "Import terminé : {$created} créé(s), {$updated} mis à jour.");
+            ->with('success', __('Import terminé : :created créé(s), :updated mis à jour.', ['created' => $created, 'updated' => $updated]));
     }
 }

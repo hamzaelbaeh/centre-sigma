@@ -33,7 +33,7 @@ class TrainingController extends Controller
         unset($data['subjects']);
         $t = Training::create($data);
         $t->subjects()->sync($subjects);
-        return redirect()->route('trainings.show',$t)->with('success','Formation créée.');
+        return redirect()->route('trainings.show',$t)->with('success',__('Formation créée.'));
     }
 
     public function show(Training $training)
@@ -62,13 +62,13 @@ class TrainingController extends Controller
         unset($data['subjects']);
         $training->update($data);
         $training->subjects()->sync($subjects);
-        return redirect()->route('trainings.show',$training)->with('success','Formation mise à jour.');
+        return redirect()->route('trainings.show',$training)->with('success',__('Formation mise à jour.'));
     }
 
     public function destroy(Training $training)
     {
         $training->delete();
-        return redirect()->route('trainings.index')->with('success','Formation supprimée.');
+        return redirect()->route('trainings.index')->with('success',__('Formation supprimée.'));
     }
 
     public function enroll(Request $request, Training $training)
@@ -80,7 +80,7 @@ class TrainingController extends Controller
             'montant_paye'=>'nullable|numeric',
         ]);
         $training->participants()->create($data);
-        return back()->with('success','Participant inscrit.');
+        return back()->with('success',__('Participant inscrit.'));
     }
 
     public function updateParticipant(Request $request, TrainingParticipant $participant)
@@ -90,6 +90,6 @@ class TrainingController extends Controller
         ]);
         $data['certificat'] = $request->boolean('certificat');
         $participant->update($data);
-        return back()->with('success','Participant mis à jour.');
+        return back()->with('success',__('Participant mis à jour.'));
     }
 }

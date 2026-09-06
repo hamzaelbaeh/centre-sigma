@@ -32,12 +32,12 @@ class TeacherPayrollController extends Controller
             );
             $n++;
         }
-        return back()->with('success', "$n fiche(s) de paie générée(s).");
+        return back()->with('success', __(':n fiche(s) de paie générée(s).', ['n' => $n]));
     }
 
     public function pay(TeacherPayroll $payroll)
     {
         $payroll->update(['statut'=>'Payé']);
-        return back()->with('success', 'Paie marquée comme payée.');
+        return back()->with('success', __('Paie marquée comme payée.'));
     }
 }

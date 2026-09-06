@@ -24,7 +24,7 @@ class StaffController extends Controller
         $data['statut'] = $data['statut'] ?? 'Actif';
         $data['matricule'] = 'EMP'.str_pad((string)(Staff::max('id')+1), 4, '0', STR_PAD_LEFT);
         Staff::create($data);
-        return redirect()->route('staff.index')->with('success','Employé créé.');
+        return redirect()->route('staff.index')->with('success',__('Employé créé.'));
     }
 
     public function edit(Staff $staff) { return view('staff.edit', compact('staff')); }
@@ -37,12 +37,12 @@ class StaffController extends Controller
             'salaire'=>'required|numeric|min:0','mode_paiement'=>'nullable|string','statut'=>'nullable|string',
         ]);
         $staff->update($data);
-        return redirect()->route('staff.index')->with('success','Employé mis à jour.');
+        return redirect()->route('staff.index')->with('success',__('Employé mis à jour.'));
     }
 
     public function destroy(Staff $staff)
     {
         $staff->delete();
-        return redirect()->route('staff.index')->with('success','Employé supprimé.');
+        return redirect()->route('staff.index')->with('success',__('Employé supprimé.'));
     }
 }

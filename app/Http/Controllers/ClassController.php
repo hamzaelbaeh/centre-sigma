@@ -33,7 +33,7 @@ class ClassController extends Controller
         ]);
         $data['school_year_id'] = SchoolYear::active()?->id;
         SchoolClass::create($data);
-        return redirect()->route('classes.index')->with('success', 'Classe créée.');
+        return redirect()->route('classes.index')->with('success', __('Classe créée.'));
     }
 
     public function show(SchoolClass $class)
@@ -58,12 +58,12 @@ class ClassController extends Controller
             'capacite' => 'nullable|integer|min:1',
         ]);
         $class->update($data);
-        return redirect()->route('classes.index')->with('success', 'Classe mise à jour.');
+        return redirect()->route('classes.index')->with('success', __('Classe mise à jour.'));
     }
 
     public function destroy(SchoolClass $class)
     {
         $class->delete();
-        return redirect()->route('classes.index')->with('success', 'Classe supprimée.');
+        return redirect()->route('classes.index')->with('success', __('Classe supprimée.'));
     }
 }

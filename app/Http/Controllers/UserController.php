@@ -29,7 +29,7 @@ class UserController extends Controller
         $data['is_active'] = $request->boolean('is_active', true);
         $data['password'] = Hash::make($data['password']);
         User::create($data);
-        return redirect()->route('users.index')->with('success','Utilisateur créé.');
+        return redirect()->route('users.index')->with('success',__('Utilisateur créé.'));
     }
 
     public function edit(User $user) { return view('users.edit', compact('user')); }
@@ -47,13 +47,13 @@ class UserController extends Controller
         if (empty($data['password'])) unset($data['password']);
         else $data['password'] = Hash::make($data['password']);
         $user->update($data);
-        return redirect()->route('users.index')->with('success','Utilisateur mis à jour.');
+        return redirect()->route('users.index')->with('success',__('Utilisateur mis à jour.'));
     }
 
     public function destroy(User $user)
     {
         if ($user->id === auth()->id()) return back()->withErrors(['error'=>'Impossible de supprimer votre propre compte.']);
         $user->delete();
-        return redirect()->route('users.index')->with('success','Utilisateur supprimé.');
+        return redirect()->route('users.index')->with('success',__('Utilisateur supprimé.'));
     }
 }

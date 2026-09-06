@@ -48,7 +48,7 @@ class PaymentController extends Controller
         ]);
         $payment->paye = (float)$payment->paye + $montant;
         $payment->refreshStatut();
-        return back()->with('success', 'Paiement encaissé.');
+        return back()->with('success', __('Paiement encaissé.'));
     }
 
     public function generateMensualites(Request $request)
@@ -75,7 +75,7 @@ class PaymentController extends Controller
             ]);
             $created++;
         }
-        return back()->with('success', "$created mensualité(s) générée(s).");
+        return back()->with('success', __(':n mensualité(s) générée(s).', ['n' => $created]));
     }
 
     public function impayes()

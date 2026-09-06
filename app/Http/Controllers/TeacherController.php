@@ -40,7 +40,7 @@ class TeacherController extends Controller
         $data['mode_paiement'] = $data['mode_paiement'] ?? 'Mensuel';
         $data['matricule'] = 'ENS'.str_pad((string)(Teacher::max('id')+1), 4, '0', STR_PAD_LEFT);
         Teacher::create($data);
-        return redirect()->route('teachers.index')->with('success', 'Enseignant créé.');
+        return redirect()->route('teachers.index')->with('success', __('Enseignant créé.'));
     }
 
     public function edit(Teacher $teacher) { return view('teachers.edit', compact('teacher')); }
@@ -61,12 +61,12 @@ class TeacherController extends Controller
             'valeur_dh' => 'required|numeric|min:0',
         ]);
         $teacher->update($data);
-        return redirect()->route('teachers.index')->with('success', 'Enseignant mis à jour.');
+        return redirect()->route('teachers.index')->with('success', __('Enseignant mis à jour.'));
     }
 
     public function destroy(Teacher $teacher)
     {
         $teacher->delete();
-        return redirect()->route('teachers.index')->with('success', 'Enseignant supprimé.');
+        return redirect()->route('teachers.index')->with('success', __('Enseignant supprimé.'));
     }
 }

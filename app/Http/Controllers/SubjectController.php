@@ -39,7 +39,7 @@ class SubjectController extends Controller
         $subject = Subject::create($data);
         $subject->classes()->sync($classes);
         $subject->teachers()->sync($teachers);
-        return redirect()->route('subjects.index')->with('success', 'Matière créée.');
+        return redirect()->route('subjects.index')->with('success', __('Matière créée.'));
     }
 
     public function edit(Subject $subject)
@@ -66,12 +66,12 @@ class SubjectController extends Controller
         $subject->update($data);
         $subject->classes()->sync($classes);
         $subject->teachers()->sync($teachers);
-        return redirect()->route('subjects.index')->with('success', 'Matière mise à jour.');
+        return redirect()->route('subjects.index')->with('success', __('Matière mise à jour.'));
     }
 
     public function destroy(Subject $subject)
     {
         $subject->delete();
-        return redirect()->route('subjects.index')->with('success', 'Matière supprimée.');
+        return redirect()->route('subjects.index')->with('success', __('Matière supprimée.'));
     }
 }

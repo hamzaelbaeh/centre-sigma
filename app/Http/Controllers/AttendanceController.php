@@ -58,7 +58,7 @@ class AttendanceController extends Controller
                 ]
             );
         }
-        return back()->with('success', 'Présences enregistrées.');
+        return back()->with('success', __('Présences enregistrées.'));
     }
 
     public function absences(Request $request)

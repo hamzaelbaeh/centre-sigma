@@ -25,7 +25,7 @@ class StaffPayrollController extends Controller
                 ['brut'=>$s->salaire,'primes'=>0,'avances'=>0,'retenues'=>0,'net'=>$net,'statut'=>'En attente']
             );
         }
-        return back()->with('success','Paie du personnel générée.');
+        return back()->with('success',__('Paie du personnel générée.'));
     }
 
     public function update(Request $request, StaffPayroll $payroll)
@@ -38,12 +38,12 @@ class StaffPayrollController extends Controller
         $data['retenues'] = $data['retenues'] ?? 0;
         $data['net'] = TeacherPayroll::calcNet($data['brut'],$data['primes'],$data['avances'],$data['retenues']);
         $payroll->update($data);
-        return back()->with('success','Fiche mise à jour.');
+        return back()->with('success',__('Fiche mise à jour.'));
     }
 
     public function pay(StaffPayroll $payroll)
     {
         $payroll->update(['statut'=>'Payé']);
-        return back()->with('success','Paie payée.');
+        return back()->with('success',__('Paie payée.'));
     }
 }

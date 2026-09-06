@@ -30,7 +30,7 @@ class SettingController extends Controller
             $data['logo'] = $request->file('logo')->store('logos', 'public');
         }
         $settings->update($data);
-        return back()->with('success','Paramètres enregistrés.');
+        return back()->with('success',__('Paramètres enregistrés.'));
     }
 
     public function deleteLogo()
@@ -40,6 +40,6 @@ class SettingController extends Controller
             Storage::disk('public')->delete($settings->logo);
             $settings->update(['logo'=>null]);
         }
-        return back()->with('success','Logo supprimé.');
+        return back()->with('success',__('Logo supprimé.'));
     }
 }

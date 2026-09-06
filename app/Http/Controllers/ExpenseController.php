@@ -35,7 +35,7 @@ class ExpenseController extends Controller
             'mode'=>'nullable|string','reference'=>'nullable|string',
         ]);
         Expense::create($data);
-        return redirect()->route('expenses.index')->with('success','Dépense créée.');
+        return redirect()->route('expenses.index')->with('success',__('Dépense créée.'));
     }
 
     public function edit(Expense $expense) { return view('expenses.edit', compact('expense')); }
@@ -48,12 +48,12 @@ class ExpenseController extends Controller
             'mode'=>'nullable|string','reference'=>'nullable|string',
         ]);
         $expense->update($data);
-        return redirect()->route('expenses.index')->with('success','Dépense mise à jour.');
+        return redirect()->route('expenses.index')->with('success',__('Dépense mise à jour.'));
     }
 
     public function destroy(Expense $expense)
     {
         $expense->delete();
-        return redirect()->route('expenses.index')->with('success','Dépense supprimée.');
+        return redirect()->route('expenses.index')->with('success',__('Dépense supprimée.'));
     }
 }

@@ -43,12 +43,12 @@ class TimetableController extends Controller
             'salle' => 'nullable|string',
         ]);
         TimetableSlot::create($data);
-        return back()->with('success', 'Créneau ajouté.');
+        return back()->with('success', __('Créneau ajouté.'));
     }
 
     public function destroy(TimetableSlot $timetable)
     {
         $timetable->delete();
-        return back()->with('success', 'Créneau supprimé.');
+        return back()->with('success', __('Créneau supprimé.'));
     }
 }

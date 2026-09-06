@@ -21,7 +21,7 @@ class AuthController extends Controller
 
         $user = \App\Models\User::where('username', $credentials['username'])->first();
         if (!$user || !$user->is_active) {
-            return back()->withErrors(['username' => 'Identifiants invalides ou compte désactivé.'])->onlyInput('username');
+            return back()->withErrors(['username' => __('Identifiants invalides ou compte désactivé.')])->onlyInput('username');
         }
 
         if (Auth::attempt(['username' => $credentials['username'], 'password' => $credentials['password']], $request->boolean('remember'))) {
@@ -29,7 +29,7 @@ class AuthController extends Controller
             return redirect()->intended(route('dashboard'));
         }
 
-        return back()->withErrors(['username' => 'Identifiants invalides.'])->onlyInput('username');
+        return back()->withErrors(['username' => __('Identifiants invalides.')])->onlyInput('username');
     }
 
     public function logout(Request $request)
