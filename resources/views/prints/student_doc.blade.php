@@ -1,5 +1,5 @@
 <!DOCTYPE html><html lang="{{ app()->getLocale() }}" @if(app()->getLocale()==='ar') dir="rtl" @endif><head><meta charset="utf-8"><title>{{ $title ?? __('Document') }}</title>
-<link rel="stylesheet" href="{{ asset('css/app.css') }}"><style>body{background:#fff}</style></head><body>
+<link rel="stylesheet" href="{{ asset('css/app.css') }}?v={{ @filemtime(public_path('css/app.css')) ?: time() }}"><style>body{background:#fff}</style></head><body>
 <div class="print-page">
 <div class="no-print" style="margin-bottom:12px"><button class="btn btn-gold" onclick="window.print()">{{ __('Imprimer') }}</button></div>
 <h2>{{ $settings->nom_etablissement ?? 'NOOR ACADEMY' }}</h2>

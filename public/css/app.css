@@ -22,7 +22,7 @@ button, input, select, textarea { font-family: inherit; }
 .app { display: flex; min-height: 100vh; }
 .sidebar {
   width: var(--sidebar-w); background: var(--sidebar); color: #fff; position: fixed;
-  top: 0; left: 0; bottom: 0; overflow-y: auto; z-index: 40; display: flex; flex-direction: column;
+  top: 0; bottom: 0; inset-inline-start: 0; overflow-y: auto; z-index: 40; display: flex; flex-direction: column;
 }
 .sidebar-brand { padding: 18px 16px; display: flex; gap: 10px; align-items: center; border-bottom: 1px solid rgba(255,255,255,.08); }
 .sidebar-brand .logo {
@@ -42,7 +42,7 @@ button, input, select, textarea { font-family: inherit; }
 .nav-link.active { background: var(--gold); color: #081f52; font-weight: 700; }
 .nav-link i, .nav-link .ico { width: 18px; text-align:center; opacity:.9; }
 .sidebar-footer { margin-top:auto; padding: 14px 16px; font-size:12px; color:#94a3b8; border-top:1px solid rgba(255,255,255,.08); }
-.main { margin-left: var(--sidebar-w); flex:1; min-width:0; }
+.main { margin-inline-start: var(--sidebar-w); flex:1; min-width:0; }
 .topbar {
   height: var(--topbar-h); background: var(--white); border-bottom: 1px solid var(--border);
   display:flex; align-items:center; justify-content:flex-end; gap:12px; padding: 0 20px;
@@ -80,7 +80,7 @@ button, input, select, textarea { font-family: inherit; }
 }
 @media (max-width: 700px) {
   .sidebar { display:none; }
-  .main { margin-left:0; }
+  .main { margin-inline-start:0; }
   .grid-6, .grid-4, .grid-3, .grid-2 { grid-template-columns: 1fr; }
 }
 .card {
@@ -165,50 +165,66 @@ table.data tr:hover td { background:#f8fafc; }
   .content { padding:0; }
 }
 
-/* RTL (Arabic) — sidebar on the right */
-html[dir=rtl] body,
-[dir=rtl] body {
+/* RTL (Arabic) — sidebar on the right via logical props + fallbacks */
+html[dir="rtl"],
+html[dir="rtl"] body,
+body[dir="rtl"] {
   direction: rtl;
 }
-[dir=rtl] .sidebar {
-  left: unset !important;
+/* Explicit physical fallback if logical props ignored */
+html[dir="rtl"] .sidebar,
+body[dir="rtl"] .sidebar {
+  left: auto !important;
   right: 0 !important;
+  inset-inline-start: auto !important;
+  inset-inline-end: 0 !important;
 }
-[dir=rtl] .main {
+html[dir="rtl"] .main,
+body[dir="rtl"] .main {
   margin-left: 0 !important;
   margin-right: var(--sidebar-w) !important;
+  margin-inline-start: 0 !important;
+  margin-inline-end: var(--sidebar-w) !important;
 }
-[dir=rtl] .topbar {
+html[dir="rtl"] .topbar,
+body[dir="rtl"] .topbar {
   flex-direction: row-reverse;
   justify-content: flex-start;
 }
-[dir=rtl] .page-head,
-[dir=rtl] .actions,
-[dir=rtl] .filters,
-[dir=rtl] .user-chip,
-[dir=rtl] .lang-toggle,
-[dir=rtl] .sidebar-brand,
-[dir=rtl] .nav-link {
+html[dir="rtl"] .page-head,
+html[dir="rtl"] .actions,
+html[dir="rtl"] .filters,
+html[dir="rtl"] .user-chip,
+html[dir="rtl"] .lang-toggle,
+html[dir="rtl"] .sidebar-brand,
+html[dir="rtl"] .nav-link,
+body[dir="rtl"] .page-head,
+body[dir="rtl"] .actions,
+body[dir="rtl"] .filters,
+body[dir="rtl"] .user-chip,
+body[dir="rtl"] .lang-toggle,
+body[dir="rtl"] .sidebar-brand,
+body[dir="rtl"] .nav-link {
   flex-direction: row-reverse;
 }
-[dir=rtl] .nav-group-title,
-[dir=rtl] .sidebar-footer,
-[dir=rtl] .page-head h1,
-[dir=rtl] .page-head .sub,
-[dir=rtl] .content,
-[dir=rtl] .form-group label,
-[dir=rtl] .stat-label,
-[dir=rtl] table.data th,
-[dir=rtl] table.data td,
-[dir=rtl] .card,
-[dir=rtl] .login-card {
+html[dir="rtl"] .nav-group-title,
+html[dir="rtl"] .sidebar-footer,
+html[dir="rtl"] .page-head h1,
+html[dir="rtl"] .page-head .sub,
+html[dir="rtl"] .content,
+html[dir="rtl"] .form-group label,
+html[dir="rtl"] .stat-label,
+html[dir="rtl"] table.data th,
+html[dir="rtl"] table.data td,
+html[dir="rtl"] .card,
+html[dir="rtl"] .login-card {
   text-align: right;
 }
-[dir=rtl] .alert ul {
+html[dir="rtl"] .alert ul {
   padding-right: 18px;
   padding-left: 0;
 }
-[dir=rtl] .nav-group-title {
+html[dir="rtl"] .nav-group-title {
   letter-spacing: 0;
   text-transform: none;
 }
@@ -227,6 +243,9 @@ a.lang-btn.active {
   background: #fffbeb;
 }
 @media (max-width: 700px) {
-  [dir=rtl] .main { margin-right: 0 !important; }
-  [dir=rtl] .sidebar { right: 0; left: unset; }
+  html[dir="rtl"] .main,
+  body[dir="rtl"] .main {
+    margin-right: 0 !important;
+    margin-inline-end: 0 !important;
+  }
 }
