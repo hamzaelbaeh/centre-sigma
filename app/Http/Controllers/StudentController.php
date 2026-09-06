@@ -2,9 +2,12 @@
 namespace App\Http\Controllers;
 
 use App\Models\ParentGuardian;
+use App\Models\Payment;
+use App\Models\PaymentTransaction;
 use App\Models\SchoolClass;
 use App\Models\SchoolYear;
 use App\Models\Student;
+use App\Models\Subject;
 use Illuminate\Http\Request;
 
 class StudentController extends Controller
@@ -31,7 +34,8 @@ class StudentController extends Controller
     {
         $classes = SchoolClass::orderBy('nom')->get();
         $parents = ParentGuardian::orderBy('nom')->get();
-        return view('students.create', compact('classes','parents'));
+        $subjects = Subject::orderBy('nom')->get();
+        return view('students.create', compact('classes','parents','subjects'));
     }
 
     public function store(Request $request)
@@ -52,7 +56,19 @@ class StudentController extends Controller
             'code_massar' => 'nullable|string',
             'photo' => 'nullable|image|max:2048',
             'parents' => 'nullable|array',
+            'subjects' => 'nullable|array',
+            'subjects.*' => 'exists:subjects,id',
+            'subject_prix' => 'nullable|array',
+            'subject_prix.*' => 'nullable|numeric|min:0',
+            'payment_statut' => 'nullable|in:Non payé,Partiel,Soldé',
+            'payment_paye' => 'nullable|numeric|min:0',
         ]);
+        if (($data['payment_statut'] ?? 'Non payé') === 'Partiel') {
+            $request->validate([
+                'payment_paye' => 'required|numeric|min:0.01',
+            ]);
+            $data['payment_paye'] = $request->input('payment_paye');
+        }
         $data['statut'] = $data['statut'] ?? 'Actif';
         $data['school_year_id'] = SchoolYear::active()?->id;
         if (!$request->filled('matricule')) {
@@ -62,15 +78,21 @@ class StudentController extends Controller
             $data['photo'] = $request->file('photo')->store('photos', 'public');
         }
         $parents = $data['parents'] ?? [];
-        unset($data['parents']);
+        $subjectIds = $data['subjects'] ?? [];
+        $subjectPrix = $data['subject_prix'] ?? [];
+        $paymentStatut = $data['payment_statut'] ?? 'Non payé';
+        $paymentPaye = $data['payment_paye'] ?? null;
+        unset($data['parents'], $data['subjects'], $data['subject_prix'], $data['payment_statut'], $data['payment_paye']);
         $student = Student::create($data);
         $student->parents()->sync($parents);
+        $this->syncStudentSubjects($student, $subjectIds, $subjectPrix);
+        $this->createInitialMensualite($student, $paymentStatut, $paymentPaye);
         return redirect()->route('students.index')->with('success', __('Élève créé avec succès.'));
     }
 
     public function show(Student $student)
     {
-        $student->load(['schoolClass','parents','payments']);
+        $student->load(['schoolClass','parents','payments','subjects']);
         return view('students.show', compact('student'));
     }
 
@@ -78,8 +100,9 @@ class StudentController extends Controller
     {
         $classes = SchoolClass::orderBy('nom')->get();
         $parents = ParentGuardian::orderBy('nom')->get();
-        $student->load('parents');
-        return view('students.edit', compact('student','classes','parents'));
+        $subjects = Subject::orderBy('nom')->get();
+        $student->load(['parents','subjects']);
+        return view('students.edit', compact('student','classes','parents','subjects'));
     }
 
     public function update(Request $request, Student $student)
@@ -100,14 +123,21 @@ class StudentController extends Controller
             'code_massar' => 'nullable|string',
             'photo' => 'nullable|image|max:2048',
             'parents' => 'nullable|array',
+            'subjects' => 'nullable|array',
+            'subjects.*' => 'exists:subjects,id',
+            'subject_prix' => 'nullable|array',
+            'subject_prix.*' => 'nullable|numeric|min:0',
         ]);
         if ($request->hasFile('photo')) {
             $data['photo'] = $request->file('photo')->store('photos', 'public');
         }
         $parents = $data['parents'] ?? [];
-        unset($data['parents']);
+        $subjectIds = $data['subjects'] ?? [];
+        $subjectPrix = $data['subject_prix'] ?? [];
+        unset($data['parents'], $data['subjects'], $data['subject_prix']);
         $student->update($data);
         $student->parents()->sync($parents);
+        $this->syncStudentSubjects($student, $subjectIds, $subjectPrix);
         return redirect()->route('students.index')->with('success', __('Élève mis à jour.'));
     }
 
@@ -228,5 +258,26 @@ class StudentController extends Controller
 
         return redirect()->route('students.index')
             ->with('success', __('Import terminé : :created créé(s), :updated mis à jour.', ['created' => $created, 'updated' => $updated]));
+    }
+
+    /**
+     * Sync enrolled subjects with explicit prix (from form, else subject default).
+     */
+    private function syncStudentSubjects(Student $student, array $subjectIds, array $subjectPrix): void
+    {
+        $subjectIds = array_values(array_unique(array_map('intval', $subjectIds)));
+        $defaults = Subject::whereIn('id', $subjectIds)->pluck('prix', 'id');
+        $sync = [];
+        foreach ($subjectIds as $id) {
+            if (array_key_exists($id, $subjectPrix) && $subjectPrix[$id] !== null && $subjectPrix[$id] !== '') {
+                $prix = (float) $subjectPrix[$id];
+            } elseif (array_key_exists((string) $id, $subjectPrix) && $subjectPrix[(string) $id] !== null && $subjectPrix[(string) $id] !== '') {
+                $prix = (float) $subjectPrix[(string) $id];
+            } else {
+                $prix = (float) ($defaults[$id] ?? 0);
+            }
+            $sync[$id] = ['prix' => $prix];
+        }
+        $student->subjects()->sync($sync);
     }
 }

@@ -15,5 +15,11 @@ class Subject extends Model
     }
     public function classes(): BelongsToMany { return $this->belongsToMany(SchoolClass::class, 'class_subject', 'subject_id', 'class_id'); }
     public function teachers(): BelongsToMany { return $this->belongsToMany(Teacher::class); }
+    public function students(): BelongsToMany
+    {
+        return $this->belongsToMany(Student::class, 'student_subject')
+            ->withPivot('prix')
+            ->withTimestamps();
+    }
     public function trainings(): BelongsToMany { return $this->belongsToMany(Training::class, 'subject_training'); }
 }

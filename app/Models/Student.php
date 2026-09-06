@@ -19,7 +19,25 @@ class Student extends Model
     public function schoolClass(): BelongsTo { return $this->belongsTo(SchoolClass::class, 'class_id'); }
     public function schoolYear(): BelongsTo { return $this->belongsTo(SchoolYear::class); }
     public function parents(): BelongsToMany { return $this->belongsToMany(ParentGuardian::class, 'parent_student', 'student_id', 'parent_id'); }
+    public function subjects(): BelongsToMany
+    {
+        return $this->belongsToMany(Subject::class, 'student_subject')
+            ->withPivot('prix')
+            ->withTimestamps();
+    }
     public function payments(): HasMany { return $this->hasMany(Payment::class); }
     public function attendances(): HasMany { return $this->hasMany(Attendance::class); }
     public function departures(): HasMany { return $this->hasMany(Departure::class); }
+
+    /** Sum of enrolled subject prices (pivot.prix, else subject.prix as safety). */
+    public function monthlyFeeAmount(): float
+    {
+        $this->loadMissing('subjects');
+        return (float) $this->subjects->sum(function (Subject $subject) {
+            $pivotPrix = $subject->pivot->prix ?? null;
+            return $pivotPrix !== null && $pivotPrix !== ''
+                ? (float) $pivotPrix
+                : (float) ($subject->prix ?? 0);
+        });
+    }
 }

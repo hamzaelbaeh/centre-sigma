@@ -16,6 +16,19 @@
  <p><strong>{{ __('Massar:') }}</strong> {{ $student->code_massar }}</p>
 </div>
 <div class="card">
+ <h3>{{ __('Matières inscrites') }}</h3>
+ <table class="data"><thead><tr><th>{{ __('Matière') }}</th><th>{{ __('Prix facturé') }}</th></tr></thead><tbody>
+ @forelse($student->subjects as $sub)
+ @php
+   $prix = $sub->pivot->prix !== null && $sub->pivot->prix !== '' ? (float)$sub->pivot->prix : (float)$sub->prix;
+ @endphp
+ <tr><td>{{ $sub->nom }}</td><td>{{ number_format($prix, 2, ',', ' ') }} DH</td></tr>
+ @empty
+ <tr><td colspan="2" class="muted">{{ __('Aucune matière') }}</td></tr>
+ @endforelse
+ </tbody></table>
+ <p style="margin-top:8px"><strong>{{ __('Total mensuel estimé') }} :</strong> {{ number_format($student->monthlyFeeAmount(), 2, ',', ' ') }} DH</p>
+
  <h3>{{ __('Parents / Tuteurs') }}</h3>
  <ul>@forelse($student->parents as $p)<li>{{ $p->full_name }} — {{ $p->telephone }}</li>@empty<li class="muted">{{ __('Aucun') }}</li>@endforelse</ul>
  <h3>{{ __('Paiements') }}</h3>

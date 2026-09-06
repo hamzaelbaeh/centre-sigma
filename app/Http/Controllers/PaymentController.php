@@ -54,13 +54,12 @@ class PaymentController extends Controller
     {
         $periode = $request->get('periode', now()->format('Y-m'));
         $year = SchoolYear::active();
-        $students = Student::with(['schoolClass.subjects'])
+        $students = Student::with(['subjects'])
             ->where('statut', 'Actif')
-            ->whereNotNull('class_id')
             ->get();
         $created = 0;
         foreach ($students as $student) {
-            $montant = (float) ($student->schoolClass?->subjects?->sum('prix') ?? 0);
+            $montant = $student->monthlyFeeAmount();
             if ($montant <= 0) continue;
             $exists = Payment::where('student_id', $student->id)
                 ->where('type', 'Mensualité')

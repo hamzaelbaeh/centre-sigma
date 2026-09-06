@@ -32,6 +32,8 @@
 <div class="form-group"><label>{{ __('Photo') }}</label><input class="form-input" style="width:100%" type="file" name="photo" accept="image/*"></div>
 <div class="form-group"><label>{{ __('Parent / Tuteur') }}</label><div class="checkboxes">@foreach($parents as $p)<label><input type="checkbox" name="parents[]" value="{{ $p->id }}" @checked(collect(old('parents', isset($student)?$student->parents->pluck('id')->all():[]))->contains($p->id))> {{ $p->full_name }}</label>@endforeach</div></div>
 
+@include('students.partials.subjects')
+
 <button class="btn btn-gold" type="submit">{{ __('Enregistrer') }}</button>
 </form>
 @endsection
