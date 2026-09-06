@@ -53,8 +53,8 @@
         ]],
     ];
 @endphp
-<div class="app">
-    <aside class="sidebar" id="sidebar">
+<div class="app {{ app()->getLocale()==='ar' ? 'is-rtl' : '' }}">
+    <aside class="sidebar{{ app()->getLocale()==='ar' ? ' is-rtl' : '' }}" id="sidebar">
         <div class="sidebar-brand">
             <div class="logo">
                 @if(!empty($appSettings?->logo))
