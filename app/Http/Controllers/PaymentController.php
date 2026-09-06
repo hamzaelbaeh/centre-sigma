@@ -1,7 +1,6 @@
 <?php
 namespace App\Http\Controllers;
 
-use App\Models\Fee;
 use App\Models\Payment;
 use App\Models\PaymentTransaction;
 use App\Models\SchoolYear;
@@ -55,19 +54,23 @@ class PaymentController extends Controller
     {
         $periode = $request->get('periode', now()->format('Y-m'));
         $year = SchoolYear::active();
-        $students = Student::where('statut','Actif')->whereNotNull('class_id')->get();
+        $students = Student::with(['schoolClass.subjects'])
+            ->where('statut', 'Actif')
+            ->whereNotNull('class_id')
+            ->get();
         $created = 0;
         foreach ($students as $student) {
-            $fee = Fee::where('class_id', $student->class_id)
-                ->when($year, fn($q) => $q->where('school_year_id', $year->id))
-                ->first();
-            if (!$fee || $fee->mensualite <= 0) continue;
-            $exists = Payment::where('student_id',$student->id)->where('type','Mensualité')->where('periode',$periode)->exists();
+            $montant = (float) ($student->schoolClass?->subjects?->sum('prix') ?? 0);
+            if ($montant <= 0) continue;
+            $exists = Payment::where('student_id', $student->id)
+                ->where('type', 'Mensualité')
+                ->where('periode', $periode)
+                ->exists();
             if ($exists) continue;
             Payment::create([
                 'student_id' => $student->id,
                 'type' => 'Mensualité',
-                'montant' => $fee->mensualite,
+                'montant' => $montant,
                 'paye' => 0,
                 'periode' => $periode,
                 'statut' => 'Non payé',

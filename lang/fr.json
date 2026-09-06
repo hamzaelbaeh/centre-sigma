@@ -454,5 +454,10 @@
   "Payé": "Payé",
   "En attente": "En attente",
   "Généré": "Généré",
-  "Non payé": "Non payé"
+  "Non payé": "Non payé",
+  "Prix": "Prix",
+  "La mensualité d'un élève est la somme des prix des matières de sa classe.": "La mensualité d'un élève est la somme des prix des matières de sa classe.",
+  "Définissez les frais par classe. La mensualité est calculée automatiquement à partir des prix des matières liées à la classe. Mettre 0 pour supprimer un frais.": "Définissez les frais par classe. La mensualité est calculée automatiquement à partir des prix des matières liées à la classe. Mettre 0 pour supprimer un frais.",
+  "Mensualité (matières)": "Mensualité (matières)",
+  "Somme des prix des matières liées à cette classe. Modifiez les prix dans Matières.": "Somme des prix des matières liées à cette classe. Modifiez les prix dans Matières."
 }

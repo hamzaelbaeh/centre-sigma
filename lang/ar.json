@@ -454,5 +454,10 @@
   "Payé": "مؤدى",
   "En attente": "في الانتظار",
   "Généré": "مُنشأ",
-  "Non payé": "غير مؤدى"
+  "Non payé": "غير مؤدى",
+  "Prix": "الثمن",
+  "La mensualité d'un élève est la somme des prix des matières de sa classe.": "القسط الشهري للتلميذ هو مجموع أثمنة المواد المرتبطة بقسمه.",
+  "Définissez les frais par classe. La mensualité est calculée automatiquement à partir des prix des matières liées à la classe. Mettre 0 pour supprimer un frais.": "حدّد الرسوم حسب القسم. يُحسب القسط الشهري تلقائياً من أثمنة المواد المرتبطة بالقسم. ضع 0 لحذف رسم.",
+  "Mensualité (matières)": "القسط الشهري (المواد)",
+  "Somme des prix des matières liées à cette classe. Modifiez les prix dans Matières.": "مجموع أثمنة المواد المرتبطة بهذا القسم. عدّل الأثمنة من صفحة المواد."
 }

@@ -11,7 +11,7 @@ class FeeController extends Controller
     public function index()
     {
         $year = SchoolYear::active();
-        $classes = SchoolClass::with(['fee' => function($q) use ($year) {
+        $classes = SchoolClass::with(['subjects', 'fee' => function($q) use ($year) {
             if ($year) $q->where('school_year_id', $year->id);
         }])->orderBy('nom')->get();
         return view('fees.index', compact('classes','year'));
@@ -26,7 +26,7 @@ class FeeController extends Controller
                 ['class_id' => $classId, 'school_year_id' => $year?->id],
                 [
                     'inscription' => $row['inscription'] ?? 0,
-                    'mensualite' => $row['mensualite'] ?? 0,
+                    'mensualite' => 0, // mensualité comes from subject prices
                     'transport' => $row['transport'] ?? 0,
                     'cantine' => $row['cantine'] ?? 0,
                     'activites' => $row['activites'] ?? 0,

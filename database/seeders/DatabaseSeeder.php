@@ -83,14 +83,14 @@ class DatabaseSeeder extends Seeder
 
         $subjects = [];
         foreach ([
-            ['MATH','Mathématiques','Primaire',4],
-            ['FR','Français','Primaire',4],
-            ['AR','Arabe','Primaire',3],
-            ['PHY','Physique','Collège',3],
-            ['ANG','Anglais','Collège',3],
-            ['SVT','SVT','Lycée',2],
-        ] as [$code,$nom,$niv,$h]) {
-            $subjects[] = Subject::create(['code'=>$code,'nom'=>$nom,'niveau'=>$niv,'heures_semaine'=>$h]);
+            ['MATH','Mathématiques','Primaire',4,400],
+            ['FR','Français','Primaire',4,350],
+            ['AR','Arabe','Primaire',3,300],
+            ['PHY','Physique','Collège',3,400],
+            ['ANG','Anglais','Collège',3,350],
+            ['SVT','SVT','Lycée',2,300],
+        ] as [$code,$nom,$niv,$h,$prix]) {
+            $subjects[] = Subject::create(['code'=>$code,'nom'=>$nom,'niveau'=>$niv,'heures_semaine'=>$h,'prix'=>$prix]);
         }
         foreach ($subjects as $i => $sub) {
             $sub->teachers()->attach($teachers[$i % 4]->id);
@@ -133,10 +133,10 @@ class DatabaseSeeder extends Seeder
 
         // Fees per class
         $feeMap = [
-            0 => ['inscription'=>1000,'mensualite'=>1200,'transport'=>300,'formation'=>200],
-            1 => ['inscription'=>1000,'mensualite'=>1200,'transport'=>300],
-            2 => ['inscription'=>1000,'mensualite'=>1500,'transport'=>300],
-            3 => ['inscription'=>800,'mensualite'=>1000,'transport'=>0],
+            0 => ['inscription'=>1000,'mensualite'=>0,'transport'=>300,'formation'=>200],
+            1 => ['inscription'=>1000,'mensualite'=>0,'transport'=>300],
+            2 => ['inscription'=>1000,'mensualite'=>0,'transport'=>300],
+            3 => ['inscription'=>800,'mensualite'=>0,'transport'=>0],
         ];
         foreach ($classes as $i => $c) {
             $vals = array_merge(['inscription'=>0,'mensualite'=>0,'transport'=>0,'cantine'=>0,'activites'=>0,'formation'=>0,'autres'=>0], $feeMap[$i]);
@@ -146,7 +146,9 @@ class DatabaseSeeder extends Seeder
         $periode = '2026-09';
         foreach ($students as $i => $st) {
             $fee = Fee::where('class_id', $st->class_id)->first();
-            $montant = $fee?->mensualite ?? 1200;
+            $st->loadMissing('schoolClass.subjects');
+            $montant = (float) ($st->schoolClass?->subjects?->sum('prix') ?? 0);
+            if ($montant <= 0) $montant = 400;
             $paye = $i < 5 ? $montant : ($i < 10 ? round($montant/2,2) : 0);
             $pay = Payment::create([
                 'student_id'=>$st->id,'type'=>'Mensualité','montant'=>$montant,'paye'=>$paye,
