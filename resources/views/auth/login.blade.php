@@ -26,11 +26,11 @@
             @csrf
             <div class="form-group">
                 <label>Nom d'utilisateur</label>
-                <input class="form-input" style="width:100%" type="text" name="username" value="{{ old('username','admin') }}" required autofocus>
+                <input class="form-input" style="width:100%" type="text" name="username" value="{{ old('username') }}" required autofocus>
             </div>
             <div class="form-group">
                 <label>Mot de passe</label>
-                <input class="form-input" style="width:100%" type="password" name="password" value="admin123" required>
+                <input class="form-input" style="width:100%" type="password" name="password" autocomplete="current-password" required>
             </div>
             <label style="display:flex;gap:8px;align-items:center;font-size:13px;margin-bottom:14px">
                 <input type="checkbox" name="remember"> Se souvenir de moi
