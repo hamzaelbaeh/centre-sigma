@@ -11,10 +11,10 @@
 </form>
 </div></div>
 <div class="grid grid-4" style="margin-bottom:14px">
-<div class="card"><div class="stat-num" style="font-size:20px">{{ number_format($today,2,',',' ') }} DH</div><div class="stat-label">{{ __("Encaissé aujourd'hui") }}</div></div>
-<div class="card"><div class="stat-num" style="font-size:20px">{{ number_format($month,2,',',' ') }} DH</div><div class="stat-label">{{ __('Encaissé ce mois') }}</div></div>
-<div class="card"><div class="stat-num" style="font-size:20px">{{ number_format($total,2,',',' ') }} DH</div><div class="stat-label">{{ __('Total encaissé') }}</div></div>
-<div class="card"><div class="stat-num" style="font-size:20px">{{ number_format($remaining,2,',',' ') }} DH</div><div class="stat-label">{{ __('Restant') }}</div></div>
+<div class="card"><div class="stat-num" style="font-size:20px">{!! money_ltr($today) !!}</div><div class="stat-label">{{ __("Encaissé aujourd'hui") }}</div></div>
+<div class="card"><div class="stat-num" style="font-size:20px">{!! money_ltr($month) !!}</div><div class="stat-label">{{ __('Encaissé ce mois') }}</div></div>
+<div class="card"><div class="stat-num" style="font-size:20px">{!! money_ltr($total) !!}</div><div class="stat-label">{{ __('Total encaissé') }}</div></div>
+<div class="card"><div class="stat-num" style="font-size:20px">{!! money_ltr($remaining) !!}</div><div class="stat-label">{{ __('Restant') }}</div></div>
 </div>
 <form class="filters card" method="GET">
 <input type="month" name="periode" value="{{ $periode }}">
@@ -27,8 +27,8 @@
 @forelse($payments as $p)
 <tr>
 <td>{{ $p->student?->full_name }}</td><td>{{ $p->student?->schoolClass?->nom }}</td><td>{{ $p->type }}</td>
-<td>{{ number_format($p->montant,2,',',' ') }}</td><td>{{ number_format($p->paye,2,',',' ') }}</td>
-<td>{{ number_format($p->restant,2,',',' ') }}</td>
+<td><span class="ltr-num">{{ number_format($p->montant,2,',',' ') }}</span></td><td><span class="ltr-num">{{ number_format($p->paye,2,',',' ') }}</span></td>
+<td><span class="ltr-num">{{ number_format($p->restant,2,',',' ') }}</span></td>
 <td><span class="badge {{ $p->statut==='Soldé'?'badge-green':($p->statut==='Partiel'?'badge-amber':'badge-red') }}">{{ __($p->statut) }}</span></td>
 <td>
 @if($p->restant>0)

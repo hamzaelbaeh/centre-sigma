@@ -48,7 +48,7 @@ class DashboardController extends Controller
         for ($i = 5; $i >= 0; $i--) {
             $m = now()->subMonths($i);
             $key = $m->format('Y-m');
-            $label = $m->translatedFormat('M Y');
+            $label = latin_digits($m->translatedFormat('M Y'));
             $ms = $m->copy()->startOfMonth()->toDateString();
             $me = $m->copy()->endOfMonth()->toDateString();
             $chartMonths[] = [

@@ -281,3 +281,18 @@ a.lang-btn.active {
     margin-right: 0 !important;
   }
 }
+
+/* Keep Western digits and money/date runs LTR inside RTL Arabic UI */
+html[dir="rtl"] .ltr-num,
+html[dir="rtl"] .stat-num,
+html[dir="rtl"] .money-red,
+html[dir="rtl"] input[type=number],
+html[dir="rtl"] input[type=date],
+html[dir="rtl"] input[type=time],
+html[dir="rtl"] input[type=month] {
+  direction: ltr;
+  unicode-bidi: isolate;
+}
+.ltr-num {
+  unicode-bidi: isolate;
+}
