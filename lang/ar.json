@@ -12,7 +12,7 @@
   "Emploi du temps": "الجدول الزمني",
   "Présences": "الحضور",
   "Paiements élèves": "مدفوعات التلاميذ",
-  "Config. frais": "إعداد الرسوم",
+  "Config. frais": "أسعار المواد",
   "Paie enseignants": "أجور الأساتذة",
   "Employés admin.": "الموظفون الإداريون",
   "Paie employés": "أجور الموظفين",
@@ -511,5 +511,9 @@
   "Factures invalides pour cet élève.": "فواتير غير صالحة لهذا التلميذ.",
   "Aucune facture annulable sélectionnée (restant doit être > 0).": "لم يتم اختيار أي فاتورة قابلة للإلغاء (يجب أن يكون المتبقي > 0).",
   ":n facture(s) annulée(s).": "تم إلغاء :n فاتورة.",
-  "Impossible d'encaisser une facture annulée.": "لا يمكن تحصيل فاتورة ملغاة."
+  "Impossible d'encaisser une facture annulée.": "لا يمكن تحصيل فاتورة ملغاة.",
+  "Tarifs des matières": "أسعار المواد",
+  "Prix des matières enregistrés.": "تم حفظ أسعار المواد.",
+  "Prix par défaut de chaque matière. Le prix réel facturé est défini à l'inscription de l'élève.": "هذا هو السعر الافتراضي لكل مادة؛ يُحدَّد السعر الحقيقي عند تسجيل التلميذ.",
+  "Aucune matière. Créez-en une pour définir un prix.": "لا توجد مواد. أنشئ مادة لتحديد السعر."
 }

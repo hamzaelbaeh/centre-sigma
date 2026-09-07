@@ -1,40 +1,40 @@
 <?php
 namespace App\Http\Controllers;
 
-use App\Models\Fee;
-use App\Models\SchoolClass;
-use App\Models\SchoolYear;
+use App\Models\Subject;
 use Illuminate\Http\Request;
 
 class FeeController extends Controller
 {
     public function index()
     {
-        $year = SchoolYear::active();
-        $classes = SchoolClass::with(['subjects', 'fee' => function($q) use ($year) {
-            if ($year) $q->where('school_year_id', $year->id);
-        }])->orderBy('nom')->get();
-        return view('fees.index', compact('classes','year'));
+        $subjects = Subject::orderBy('niveau')->orderBy('nom')->get();
+        return view('fees.index', compact('subjects'));
     }
 
     public function store(Request $request)
     {
-        $year = SchoolYear::active();
-        $request->validate(['fees' => 'required|array']);
-        foreach ($request->fees as $classId => $row) {
-            Fee::updateOrCreate(
-                ['class_id' => $classId, 'school_year_id' => $year?->id],
-                [
-                    'inscription' => $row['inscription'] ?? 0,
-                    'mensualite' => 0, // mensualité comes from subject prices
-                    'transport' => $row['transport'] ?? 0,
-                    'cantine' => $row['cantine'] ?? 0,
-                    'activites' => $row['activites'] ?? 0,
-                    'formation' => $row['formation'] ?? 0,
-                    'autres' => $row['autres'] ?? 0,
-                ]
-            );
+        $prixInput = $request->input('subjects');
+        if (is_array($prixInput)) {
+            // subjects[id][prix] shape
+            $prixMap = [];
+            foreach ($prixInput as $id => $row) {
+                $prixMap[$id] = is_array($row) ? ($row['prix'] ?? null) : $row;
+            }
+        } else {
+            $prixMap = $request->input('prix', []);
         }
-        return back()->with('success', __('Frais enregistrés.'));
+
+        $request->merge(['prix' => $prixMap]);
+        $validated = $request->validate([
+            'prix' => 'required|array',
+            'prix.*' => 'nullable|numeric|min:0',
+        ]);
+
+        foreach ($validated['prix'] as $id => $prix) {
+            Subject::whereKey($id)->update(['prix' => $prix ?? 0]);
+        }
+
+        return back()->with('success', __('Prix des matières enregistrés.'));
     }
 }

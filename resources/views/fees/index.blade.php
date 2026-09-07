@@ -1,29 +1,35 @@
 @extends('layouts.app')
-@section('title',__('Configuration des frais'))
+@section('title',__('Tarifs des matières'))
 @section('content')
-<div class="page-head"><div><h1>{{ __('Configuration des frais —') }} {{ $year->nom ?? '2026/2027' }}</h1>
-<div class="sub">{{ __('Définissez les frais par classe (inscription, transport, etc.). La mensualité est calculée par élève selon les matières choisies à l\'inscription, pas selon les matières de la classe. Mettre 0 pour supprimer un frais.') }}</div></div></div>
+<div class="page-head"><div><h1>{{ __('Tarifs des matières') }}</h1>
+<div class="sub">{{ __('Prix par défaut de chaque matière. Le prix réel facturé est défini à l\'inscription de l\'élève.') }}</div></div>
+<a class="btn btn-gold" href="{{ route('subjects.create') }}">{{ __('Nouvelle matière') }}</a></div>
 <form method="POST" action="{{ route('fees.store') }}">@csrf
-<div class="grid grid-2">
-@foreach($classes as $c)
-@php $f=$c->fee; @endphp
-<div class="card">
-<h3>{{ $c->nom }}</h3>
-<div class="form-group">
-  <label>{{ __('Mensualité') }}</label>
-  <div class="sub">{{ __('Les matières liées à la classe servent au programme uniquement. La facturation mensuelle vient des matières inscrites pour chaque élève (prix saisi à l\'inscription).') }}</div>
-  @if($c->subjects->isNotEmpty())
-  <div class="muted" style="margin-top:6px">{{ __('Matières du programme') }} :
-    {{ $c->subjects->pluck('nom')->join(', ') }}
-  </div>
-  @endif
-</div>
-@foreach(['inscription'=>'Inscription','transport'=>'Transport','cantine'=>'Cantine','activites'=>'Activités','formation'=>'Formation','autres'=>'Autres frais'] as $k=>$label)
-<div class="form-group"><label>{{ __($label) }} (DH)</label><input class="form-input" style="width:100%" type="number" step="0.01" name="fees[{{ $c->id }}][{{ $k }}]" value="{{ old("fees.{$c->id}.{$k}", $f->$k ?? 0) }}"></div>
-@endforeach
-</div>
-@endforeach
-</div>
+<div class="card table-wrap"><table class="data">
+<thead><tr>
+  <th>{{ __('CODE') }}</th>
+  <th>{{ __('MATIÈRES') }}</th>
+  <th>{{ __('NIVEAU') }}</th>
+  <th>{{ __('Prix (DH)') }}</th>
+</tr></thead>
+<tbody>
+@forelse($subjects as $s)
+<tr>
+  <td>{{ $s->code }}</td>
+  <td><strong>{{ $s->nom }}</strong></td>
+  <td>{{ $s->niveau }}</td>
+  <td>
+    <input class="form-input" style="width:120px" type="number" step="0.01" min="0"
+           name="subjects[{{ $s->id }}][prix]"
+           value="{{ old("subjects.{$s->id}.prix", $s->prix ?? 0) }}">
+  </td>
+</tr>
+@empty
+<tr><td colspan="4" class="muted">{{ __('Aucune matière. Créez-en une pour définir un prix.') }}</td></tr>
+@endforelse
+</tbody></table></div>
+@if($subjects->isNotEmpty())
 <button class="btn btn-gold" style="margin-top:14px" type="submit">{{ __('Enregistrer') }}</button>
+@endif
 </form>
 @endsection

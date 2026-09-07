@@ -12,7 +12,7 @@
   "Emploi du temps": "Emploi du temps",
   "Présences": "Présences",
   "Paiements élèves": "Paiements élèves",
-  "Config. frais": "Config. frais",
+  "Config. frais": "Tarifs des matières",
   "Paie enseignants": "Paie enseignants",
   "Employés admin.": "Employés admin.",
   "Paie employés": "Paie employés",
@@ -511,5 +511,9 @@
   "Factures invalides pour cet élève.": "Factures invalides pour cet élève.",
   "Aucune facture annulable sélectionnée (restant doit être > 0).": "Aucune facture annulable sélectionnée (restant doit être > 0).",
   ":n facture(s) annulée(s).": ":n facture(s) annulée(s).",
-  "Impossible d'encaisser une facture annulée.": "Impossible d'encaisser une facture annulée."
+  "Impossible d'encaisser une facture annulée.": "Impossible d'encaisser une facture annulée.",
+  "Tarifs des matières": "Tarifs des matières",
+  "Prix des matières enregistrés.": "Prix des matières enregistrés.",
+  "Prix par défaut de chaque matière. Le prix réel facturé est défini à l'inscription de l'élève.": "Prix par défaut de chaque matière. Le prix réel facturé est défini à l'inscription de l'élève.",
+  "Aucune matière. Créez-en une pour définir un prix.": "Aucune matière. Créez-en une pour définir un prix."
 }
