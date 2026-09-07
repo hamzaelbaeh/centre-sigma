@@ -94,7 +94,11 @@ class StudentController extends Controller
     public function show(Student $student)
     {
         $student->load(['schoolClass','parents','payments','subjects']);
-        return view('students.show', compact('student'));
+        $unpaidPayments = $student->payments
+            ->filter(fn ($p) => $p->statut !== 'Annulé' && (float)$p->paye < (float)$p->montant)
+            ->sortByDesc('periode')
+            ->values();
+        return view('students.show', compact('student', 'unpaidPayments'));
     }
 
     public function edit(Student $student)
@@ -141,6 +145,47 @@ class StudentController extends Controller
         $student->parents()->sync($parents);
         $this->syncStudentSubjects($student, $subjectIds, $subjectPrix);
         return redirect()->route('students.index')->with('success', __('Élève mis à jour.'));
+    }
+
+    public function updateStatut(Request $request, Student $student)
+    {
+        $data = $request->validate([
+            'statut' => 'required|in:Actif,Suspendu,Transféré,Abandonné,Diplômé,Exclu',
+        ]);
+        $student->update(['statut' => $data['statut']]);
+        return back()->with('success', __('Statut élève mis à jour.'));
+    }
+
+    public function cancelPayments(Request $request, Student $student)
+    {
+        $data = $request->validate([
+            'payment_ids' => 'required|array|min:1',
+            'payment_ids.*' => 'integer|distinct',
+        ]);
+
+        $payments = Payment::where('student_id', $student->id)
+            ->whereIn('id', $data['payment_ids'])
+            ->get();
+
+        if ($payments->count() !== count($data['payment_ids'])) {
+            return back()->withErrors(['payment_ids' => __('Factures invalides pour cet élève.')]);
+        }
+
+        $cancelled = 0;
+        foreach ($payments as $payment) {
+            if (!$payment->isCancelable()) {
+                continue;
+            }
+            $payment->statut = 'Annulé';
+            $payment->save();
+            $cancelled++;
+        }
+
+        if ($cancelled === 0) {
+            return back()->withErrors(['payment_ids' => __('Aucune facture annulable sélectionnée (restant doit être > 0).')]);
+        }
+
+        return back()->with('success', __(':n facture(s) annulée(s).', ['n' => $cancelled]));
     }
 
     public function destroy(Student $student)

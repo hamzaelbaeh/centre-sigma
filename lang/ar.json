@@ -495,5 +495,21 @@
   "Tronc commun": "الجذع المشترك",
   "1ère bac": "الأولى باك",
   "2ème bac": "الثانية باك",
-  "Non scolarisé": "غير متمدرس"
+  "Non scolarisé": "غير متمدرس",
+  "Annulé": "ملغاة",
+  "Annuler la facture": "إلغاء الفاتورة",
+  "Annuler les factures sélectionnées": "إلغاء الفواتير المحددة",
+  "Factures non payées": "فواتير غير مدفوعة",
+  "Aucune facture non payée.": "لا توجد فاتورة غير مدفوعة.",
+  "Mettre non actif": "جعل غير نشط",
+  "Mettre à jour le statut": "تحديث الحالة",
+  "Changer rapidement le statut (Suspendu, Abandonné, etc.).": "تغيير الحالة بسرعة (موقوف، منقطع، إلخ).",
+  "Annuler une ou plusieurs factures (restant > 0). Les factures annulées n’apparaissent plus comme dues.": "إلغاء فاتورة واحدة أو أكثر (المتبقي > 0). الفواتير الملغاة لم تعد تظهر كمستحقة.",
+  "Confirmer l’annulation des factures sélectionnées ?": "تأكيد إلغاء الفواتير المحددة؟",
+  "Tout sélectionner": "تحديد الكل",
+  "Statut élève mis à jour.": "تم تحديث حالة التلميذ.",
+  "Factures invalides pour cet élève.": "فواتير غير صالحة لهذا التلميذ.",
+  "Aucune facture annulable sélectionnée (restant doit être > 0).": "لم يتم اختيار أي فاتورة قابلة للإلغاء (يجب أن يكون المتبقي > 0).",
+  ":n facture(s) annulée(s).": "تم إلغاء :n فاتورة.",
+  "Impossible d'encaisser une facture annulée.": "لا يمكن تحصيل فاتورة ملغاة."
 }

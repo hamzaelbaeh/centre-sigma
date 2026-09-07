@@ -15,6 +15,18 @@
  <p><strong>{{ __('Adresse:') }}</strong> {{ $student->adresse }}</p>
  <p><strong>{{ __('Inscription:') }}</strong> {{ optional($student->date_inscription)->format('d/m/Y') }}</p>
  <p><strong>{{ __('Massar:') }}</strong> {{ $student->code_massar }}</p>
+
+ <h3 style="margin-top:16px">{{ __('Mettre non actif') }}</h3>
+ <p class="muted" style="margin-bottom:8px">{{ __('Changer rapidement le statut (Suspendu, Abandonné, etc.).') }}</p>
+ <form method="POST" action="{{ route('students.statut', $student) }}" class="filters" style="padding:0;border:0;box-shadow:none;background:transparent">
+  @csrf
+  <select class="form-select" name="statut" style="min-width:180px">
+   @foreach(['Actif','Suspendu','Transféré','Abandonné','Diplômé','Exclu'] as $s)
+    <option value="{{ $s }}" @selected($student->statut===$s)>{{ __($s) }}</option>
+   @endforeach
+  </select>
+  <button class="btn btn-outline" type="submit">{{ __('Mettre à jour le statut') }}</button>
+ </form>
 </div>
 <div class="card">
  <h3>{{ __('Matières inscrites') }}</h3>
@@ -33,9 +45,73 @@
  <h3>{{ __('Parents / Tuteurs') }}</h3>
  <ul>@forelse($student->parents as $p)<li>{{ $p->full_name }} — {{ $p->telephone }}</li>@empty<li class="muted">{{ __('Aucun') }}</li>@endforelse</ul>
  <h3>{{ __('Paiements') }}</h3>
- <table class="data"><thead><tr><th>{{ __('TYPE') }}</th><th>{{ __('MONTANT') }}</th><th>{{ __('PAYÉ') }}</th><th>{{ __('STATUT') }}</th></tr></thead><tbody>
- @foreach($student->payments as $pay)<tr><td>{{ $pay->type }}</td><td>{{ number_format($pay->montant,2,',',' ') }}</td><td>{{ number_format($pay->paye,2,',',' ') }}</td><td>{{ __($pay->statut) }}</td></tr>@endforeach
+ <table class="data"><thead><tr><th>{{ __('TYPE') }}</th><th>{{ __('PÉRIODE') }}</th><th>{{ __('MONTANT') }}</th><th>{{ __('PAYÉ') }}</th><th>{{ __('STATUT') }}</th></tr></thead><tbody>
+ @forelse($student->payments as $pay)
+ <tr>
+  <td>{{ $pay->type }}</td>
+  <td>{{ $pay->periode }}</td>
+  <td>{{ number_format($pay->montant,2,',',' ') }}</td>
+  <td>{{ number_format($pay->paye,2,',',' ') }}</td>
+  <td><span class="badge {{ $pay->statut==='Soldé'?'badge-green':($pay->statut==='Partiel'?'badge-amber':($pay->statut==='Annulé'?'badge-gray':'badge-red')) }}">{{ __($pay->statut) }}</span></td>
+ </tr>
+ @empty
+ <tr><td colspan="5" class="muted">{{ __('Aucun') }}</td></tr>
+ @endforelse
  </tbody></table>
 </div>
 </div>
+
+<div class="card" style="margin-top:14px">
+ <h3>{{ __('Factures non payées') }}</h3>
+ <p class="muted" style="margin-bottom:10px">{{ __('Annuler une ou plusieurs factures (restant > 0). Les factures annulées n’apparaissent plus comme dues.') }}</p>
+ @if($unpaidPayments->isEmpty())
+  <p class="muted">{{ __('Aucune facture non payée.') }}</p>
+ @else
+ <form method="POST" action="{{ route('students.payments.cancel', $student) }}" onsubmit="return confirm(@json(__('Confirmer l’annulation des factures sélectionnées ?')));">
+  @csrf
+  <div class="table-wrap">
+  <table class="data">
+   <thead>
+    <tr>
+     <th style="width:40px"><input type="checkbox" id="select-all-unpaid" title="{{ __('Tout sélectionner') }}"></th>
+     <th>{{ __('TYPE') }}</th>
+     <th>{{ __('PÉRIODE') }}</th>
+     <th>{{ __('MONTANT') }}</th>
+     <th>{{ __('PAYÉ') }}</th>
+     <th>{{ __('RESTANT') }}</th>
+     <th>{{ __('STATUT') }}</th>
+    </tr>
+   </thead>
+   <tbody>
+   @foreach($unpaidPayments as $pay)
+    <tr>
+     <td><input type="checkbox" class="unpaid-cb" name="payment_ids[]" value="{{ $pay->id }}"></td>
+     <td>{{ $pay->type }}</td>
+     <td>{{ $pay->periode }}</td>
+     <td>{{ number_format($pay->montant,2,',',' ') }}</td>
+     <td>{{ number_format($pay->paye,2,',',' ') }}</td>
+     <td><span class="money-red">{{ number_format($pay->restant,2,',',' ') }}</span></td>
+     <td><span class="badge {{ $pay->statut==='Partiel'?'badge-amber':'badge-red' }}">{{ __($pay->statut) }}</span></td>
+    </tr>
+   @endforeach
+   </tbody>
+  </table>
+  </div>
+  <div class="actions" style="margin-top:12px;justify-content:flex-start">
+   <button class="btn btn-danger" type="submit">{{ __('Annuler les factures sélectionnées') }}</button>
+  </div>
+ </form>
+ @endif
+</div>
 @endsection
+@push('scripts')
+<script>
+(function(){
+  const all = document.getElementById('select-all-unpaid');
+  if (!all) return;
+  all.addEventListener('change', function(){
+    document.querySelectorAll('.unpaid-cb').forEach(cb => { cb.checked = all.checked; });
+  });
+})();
+</script>
+@endpush

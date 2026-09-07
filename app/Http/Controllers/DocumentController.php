@@ -31,7 +31,7 @@ class DocumentController extends Controller
             'releve' => $this->printReleve($request, $settings),
             'liste_eleves' => $this->printListeEleves($request, $settings),
             'absences' => $this->printAbsences($request, $settings),
-            'impayes' => view('prints.impayes', ['payments'=>Payment::with('student.schoolClass')->whereRaw('paye<montant')->get(),'settings'=>$settings]),
+            'impayes' => view('prints.impayes', ['payments'=>Payment::with('student.schoolClass')->activeDue()->get(),'settings'=>$settings]),
             'enseignants' => view('prints.enseignants', ['teachers'=>Teacher::orderBy('nom')->get(),'settings'=>$settings]),
             'salaires' => view('prints.salaires', [
                 'teacherPayrolls'=>TeacherPayroll::with('teacher')->get(),

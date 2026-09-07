@@ -12,7 +12,7 @@ class PaymentController extends Controller
     public function index(Request $request)
     {
         $periode = $request->get('periode', now()->format('Y-m'));
-        $q = Payment::with(['student.schoolClass']);
+        $q = Payment::with(['student.schoolClass'])->notCancelled();
         if ($periode) $q->where('periode', $periode);
         if ($s = $request->get('q')) {
             $q->whereHas('student', function($w) use ($s) {
@@ -24,13 +24,16 @@ class PaymentController extends Controller
         $today = PaymentTransaction::whereDate('date', today())->sum('montant');
         $month = PaymentTransaction::whereBetween('date', [now()->startOfMonth()->toDateString(), now()->endOfMonth()->toDateString()])->sum('montant');
         $total = Payment::sum('paye');
-        $remaining = Payment::selectRaw('SUM(montant - paye) as r')->value('r') ?? 0;
+        $remaining = Payment::notCancelled()->selectRaw('SUM(montant - paye) as r')->value('r') ?? 0;
 
         return view('payments.index', compact('payments','periode','today','month','total','remaining'));
     }
 
     public function encaisser(Request $request, Payment $payment)
     {
+        if ($payment->statut === 'Annulé') {
+            return back()->withErrors(['montant' => __('Impossible d\'encaisser une facture annulée.')]);
+        }
         $data = $request->validate([
             'date' => 'required|date',
             'montant' => 'required|numeric|min:0.01',
@@ -64,6 +67,7 @@ class PaymentController extends Controller
             $exists = Payment::where('student_id', $student->id)
                 ->where('type', 'Mensualité')
                 ->where('periode', $periode)
+                ->where('statut', '!=', 'Annulé')
                 ->exists();
             if ($exists) continue;
             Payment::create([
@@ -83,7 +87,7 @@ class PaymentController extends Controller
     public function impayes()
     {
         $payments = Payment::with(['student.schoolClass'])
-            ->whereRaw('paye < montant')
+            ->activeDue()
             ->orderByRaw('(montant-paye) desc')
             ->get();
         return view('payments.impayes', compact('payments'));

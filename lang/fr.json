@@ -495,5 +495,21 @@
   "Tronc commun": "Tronc commun",
   "1ère bac": "1ère bac",
   "2ème bac": "2ème bac",
-  "Non scolarisé": "Non scolarisé / غير متمدرس"
+  "Non scolarisé": "Non scolarisé / غير متمدرس",
+  "Annulé": "Annulé",
+  "Annuler la facture": "Annuler la facture",
+  "Annuler les factures sélectionnées": "Annuler les factures sélectionnées",
+  "Factures non payées": "Factures non payées",
+  "Aucune facture non payée.": "Aucune facture non payée.",
+  "Mettre non actif": "Mettre non actif",
+  "Mettre à jour le statut": "Mettre à jour le statut",
+  "Changer rapidement le statut (Suspendu, Abandonné, etc.).": "Changer rapidement le statut (Suspendu, Abandonné, etc.).",
+  "Annuler une ou plusieurs factures (restant > 0). Les factures annulées n’apparaissent plus comme dues.": "Annuler une ou plusieurs factures (restant > 0). Les factures annulées n’apparaissent plus comme dues.",
+  "Confirmer l’annulation des factures sélectionnées ?": "Confirmer l’annulation des factures sélectionnées ?",
+  "Tout sélectionner": "Tout sélectionner",
+  "Statut élève mis à jour.": "Statut élève mis à jour.",
+  "Factures invalides pour cet élève.": "Factures invalides pour cet élève.",
+  "Aucune facture annulable sélectionnée (restant doit être > 0).": "Aucune facture annulable sélectionnée (restant doit être > 0).",
+  ":n facture(s) annulée(s).": ":n facture(s) annulée(s).",
+  "Impossible d'encaisser une facture annulée.": "Impossible d'encaisser une facture annulée."
 }

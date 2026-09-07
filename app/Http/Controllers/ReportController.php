@@ -32,7 +32,7 @@ class ReportController extends Controller
         $depenses = Expense::whereBetween('date', [$from, $to])->sum('montant');
         $salaires = TeacherPayroll::where('periode',$periode)->sum('net') + StaffPayroll::where('periode',$periode)->sum('net');
         $benefice = $recettes - $depenses - $salaires;
-        $impayes = Payment::with('student.schoolClass')->whereRaw('paye < montant')->limit(50)->get();
+        $impayes = Payment::with('student.schoolClass')->activeDue()->limit(50)->get();
 
         $teachers = Teacher::with('subjects')->where('statut','Actif')->get();
 

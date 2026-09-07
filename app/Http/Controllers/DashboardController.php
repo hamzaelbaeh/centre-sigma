@@ -35,12 +35,12 @@ class DashboardController extends Controller
         $salairesPayes = TeacherPayroll::where('periode',$month)->where('statut','Payé')->sum('net')
             + \App\Models\StaffPayroll::where('periode',$month)->where('statut','Payé')->sum('net');
         $resultat = $encaisseMois - $depenses - $salairesPayes;
-        $attendu = Payment::where('periode', $month)->sum('montant');
+        $attendu = Payment::notCancelled()->where('periode', $month)->sum('montant');
         $taux = $attendu > 0 ? round(($encaisseMois / $attendu) * 100) : 0;
         $absencesToday = Attendance::whereDate('date', today())->where('status','absent')->count();
 
         $overdue = Payment::with(['student.schoolClass'])
-            ->whereRaw('paye < montant')
+            ->activeDue()
             ->orderByRaw('(montant - paye) desc')
             ->limit(10)
             ->get();

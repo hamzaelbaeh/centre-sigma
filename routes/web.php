@@ -45,6 +45,8 @@ Route::middleware('auth')->group(function () {
     Route::get('reports/export', [ExportController::class, 'reports'])->name('reports.export');
 
     Route::resource('students', StudentController::class);
+    Route::post('students/{student}/statut', [StudentController::class, 'updateStatut'])->name('students.statut');
+    Route::post('students/{student}/payments/cancel', [StudentController::class, 'cancelPayments'])->name('students.payments.cancel');
     Route::resource('parents', ParentController::class)->except(['show']);
     Route::resource('classes', ClassController::class);
     Route::post('classes/{class}/students', [ClassController::class, 'syncStudents'])->name('classes.students.sync');

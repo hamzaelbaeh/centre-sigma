@@ -134,7 +134,7 @@ class ExportController extends Controller
     public function payments(Request $request): StreamedResponse
     {
         $periode = $request->get('periode', now()->format('Y-m'));
-        $q = Payment::with(['student.schoolClass']);
+        $q = Payment::with(['student.schoolClass'])->notCancelled();
         if ($periode) {
             $q->where('periode', $periode);
         }
@@ -191,7 +191,7 @@ class ExportController extends Controller
                 ['Salaires net', $salaires],
                 ['Benefice', $recettes - $depenses - $salaires],
             ];
-            $impayes = Payment::with('student.schoolClass')->whereRaw('paye < montant')->limit(200)->get();
+            $impayes = Payment::with('student.schoolClass')->activeDue()->limit(200)->get();
 
             return $this->streamCsv('rapport-financier.csv', $headers, function ($out) use ($rows, $impayes) {
                 foreach ($rows as $r) {
