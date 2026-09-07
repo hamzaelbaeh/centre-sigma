@@ -51,4 +51,85 @@
 <div class="card" style="margin-bottom:14px"><h3>{{ __('Documents expirants (30 j.)') }}</h3><div class="empty"><div class="ok">OK</div>{{ __('Aucun document expirant') }}</div></div>
 <div class="card"><h3>{{ __("Élèves ayant quitté l'établissement") }}</h3><div class="empty">{{ __('Aucune sortie enregistrée —') }} <a href="{{ route('departures.index') }}">{{ __('voir') }}</a></div></div>
 </div></div>
+
+<div class="card" style="margin-top:14px;margin-bottom:14px">
+ <h3>{{ __('Statistiques des créneaux') }}</h3>
+ <p class="muted" style="margin:4px 0 12px">{{ __('Basé sur l\'emploi du temps (créneaux hebdomadaires récurrents).') }}</p>
+ <div class="grid grid-3" style="margin-bottom:14px">
+  <div class="card" style="box-shadow:none;border:1px solid var(--border)">
+   <div class="stat-num" style="font-size:22px">{{ number_format($weeklyHours, 2, ',', ' ') }} h</div>
+   <div class="stat-label">{{ __('Heures hebdomadaires') }}</div>
+  </div>
+  <div class="card" style="box-shadow:none;border:1px solid var(--border)">
+   <div class="stat-num" style="font-size:22px">{{ $weeklySessions }}</div>
+   <div class="stat-label">{{ __('Séances hebdomadaires') }}</div>
+  </div>
+  <div class="card" style="box-shadow:none;border:1px solid var(--border)">
+   <div class="stat-num" style="font-size:22px">{{ number_format($monthlyHoursEstimate, 2, ',', ' ') }} h</div>
+   <div class="stat-label">{{ __('تقدير شهري') }} (×4)</div>
+   <div class="muted" style="margin-top:6px;font-size:12px">{{ __('Estimation mensuelle basée sur l\'emploi du temps (heures × 4).') }}</div>
+  </div>
+ </div>
+ <div class="tabs" style="margin-bottom:10px">
+  <button type="button" class="tab active" data-slot-tab="subjects" onclick="switchSlotTab(this,'subjects')">{{ __('Par matière') }}</button>
+  <button type="button" class="tab" data-slot-tab="teachers" onclick="switchSlotTab(this,'teachers')">{{ __('Par enseignant') }}</button>
+ </div>
+ <div id="slot-tab-subjects" class="table-wrap">
+  <table class="data">
+   <thead><tr>
+    <th>{{ __('Matière') }}</th>
+    <th>{{ __('Séances / semaine') }}</th>
+    <th>{{ __('Heures / semaine') }}</th>
+    <th>{{ __('تقدير شهري') }} — {{ __('séances') }} (×4)</th>
+    <th>{{ __('تقدير شهري') }} — {{ __('heures') }} (×4)</th>
+   </tr></thead>
+   <tbody>
+   @forelse($bySubject as $row)
+   <tr>
+    <td>{{ $row['name'] }}</td>
+    <td>{{ $row['sessions'] }}</td>
+    <td>{{ number_format($row['hours'], 2, ',', ' ') }}</td>
+    <td>{{ $row['monthly_sessions'] }}</td>
+    <td>{{ number_format($row['monthly_hours'], 2, ',', ' ') }}</td>
+   </tr>
+   @empty
+   <tr><td colspan="5" class="muted">{{ __('Aucun créneau dans l\'emploi du temps.') }}</td></tr>
+   @endforelse
+   </tbody>
+  </table>
+ </div>
+ <div id="slot-tab-teachers" class="table-wrap" style="display:none">
+  <table class="data">
+   <thead><tr>
+    <th>{{ __('Enseignant') }}</th>
+    <th>{{ __('Séances / semaine') }}</th>
+    <th>{{ __('Heures / semaine') }}</th>
+    <th>{{ __('تقدير شهري') }} — {{ __('séances') }} (×4)</th>
+    <th>{{ __('تقدير شهري') }} — {{ __('heures') }} (×4)</th>
+   </tr></thead>
+   <tbody>
+   @forelse($byTeacher as $row)
+   <tr>
+    <td>{{ $row['name'] }}</td>
+    <td>{{ $row['sessions'] }}</td>
+    <td>{{ number_format($row['hours'], 2, ',', ' ') }}</td>
+    <td>{{ $row['monthly_sessions'] }}</td>
+    <td>{{ number_format($row['monthly_hours'], 2, ',', ' ') }}</td>
+   </tr>
+   @empty
+   <tr><td colspan="5" class="muted">{{ __('Aucun créneau dans l\'emploi du temps.') }}</td></tr>
+   @endforelse
+   </tbody>
+  </table>
+ </div>
+</div>
+<script>
+function switchSlotTab(btn, key) {
+  document.querySelectorAll('[data-slot-tab]').forEach(el => el.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('slot-tab-subjects').style.display = key === 'subjects' ? '' : 'none';
+  document.getElementById('slot-tab-teachers').style.display = key === 'teachers' ? '' : 'none';
+}
+</script>
+
 @endsection

@@ -2,7 +2,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\Attendance;
-use App\Models\Departure;
 use App\Models\Expense;
 use App\Models\Payment;
 use App\Models\SchoolClass;
@@ -10,8 +9,8 @@ use App\Models\Staff;
 use App\Models\Student;
 use App\Models\Teacher;
 use App\Models\TeacherPayroll;
+use App\Models\TimetableSlot;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller
 {
@@ -61,9 +60,58 @@ class DashboardController extends Controller
             ];
         }
 
+        // Session / hours stats from weekly recurring timetable slots
+        $slots = TimetableSlot::with(['subject', 'teacher'])->get();
+        $slotHours = function (TimetableSlot $slot): float {
+            $debut = Carbon::parse($slot->debut);
+            $fin = Carbon::parse($slot->fin);
+            $minutes = $debut->diffInMinutes($fin, false);
+            return max(0, $minutes) / 60;
+        };
+
+        $weeklySessions = $slots->count();
+        $weeklyHours = round($slots->sum($slotHours), 2);
+        $monthlyHoursEstimate = round($weeklyHours * 4, 2);
+
+        $bySubject = $slots->groupBy(fn (TimetableSlot $s) => $s->subject_id ?? 0)
+            ->map(function ($group) use ($slotHours) {
+                $first = $group->first();
+                $hours = round($group->sum($slotHours), 2);
+                $sessions = $group->count();
+                return [
+                    'name' => $first->subject?->nom ?: '—',
+                    'sessions' => $sessions,
+                    'hours' => $hours,
+                    'monthly_sessions' => $sessions * 4,
+                    'monthly_hours' => round($hours * 4, 2),
+                ];
+            })
+            ->sortByDesc('hours')
+            ->values();
+
+        $byTeacher = $slots->groupBy(fn (TimetableSlot $s) => $s->teacher_id ?? 0)
+            ->map(function ($group) use ($slotHours) {
+                $first = $group->first();
+                $hours = round($group->sum($slotHours), 2);
+                $sessions = $group->count();
+                $name = $first->teacher
+                    ? trim($first->teacher->nom.' '.$first->teacher->prenom)
+                    : null;
+                return [
+                    'name' => $name ?: __('Non assigné'),
+                    'sessions' => $sessions,
+                    'hours' => $hours,
+                    'monthly_sessions' => $sessions * 4,
+                    'monthly_hours' => round($hours * 4, 2),
+                ];
+            })
+            ->sortByDesc('hours')
+            ->values();
+
         return view('dashboard.index', compact(
             'eleves','enseignants','classes','employes','encaisseMois','restant','salairesAPayer',
-            'depenses','resultat','taux','attendu','absencesToday','overdue','chartMonths','month'
+            'depenses','resultat','taux','attendu','absencesToday','overdue','chartMonths','month',
+            'weeklySessions','weeklyHours','monthlyHoursEstimate','bySubject','byTeacher'
         ));
     }
 }

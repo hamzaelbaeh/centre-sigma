@@ -515,5 +515,19 @@
   "Tarifs des matières": "Tarifs des matières",
   "Prix des matières enregistrés.": "Prix des matières enregistrés.",
   "Prix par défaut de chaque matière. Le prix réel facturé est défini à l'inscription de l'élève.": "Prix par défaut de chaque matière. Le prix réel facturé est défini à l'inscription de l'élève.",
-  "Aucune matière. Créez-en une pour définir un prix.": "Aucune matière. Créez-en une pour définir un prix."
+  "Aucune matière. Créez-en une pour définir un prix.": "Aucune matière. Créez-en une pour définir un prix.",
+  "Statistiques des créneaux": "Statistiques des créneaux",
+  "Basé sur l'emploi du temps (créneaux hebdomadaires récurrents).": "Basé sur l'emploi du temps (créneaux hebdomadaires récurrents).",
+  "Heures hebdomadaires": "Heures hebdomadaires",
+  "Séances hebdomadaires": "Séances hebdomadaires",
+  "تقدير شهري": "تقدير شهري",
+  "Estimation mensuelle basée sur l'emploi du temps (heures × 4).": "Estimation mensuelle basée sur l'emploi du temps (heures × 4).",
+  "Par matière": "Par matière",
+  "Par enseignant": "Par enseignant",
+  "Séances / semaine": "Séances / semaine",
+  "Heures / semaine": "Heures / semaine",
+  "séances": "séances",
+  "heures": "heures",
+  "Non assigné": "Non assigné",
+  "Aucun créneau dans l'emploi du temps.": "Aucun créneau dans l'emploi du temps."
 }

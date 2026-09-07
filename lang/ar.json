@@ -515,5 +515,19 @@
   "Tarifs des matières": "أسعار المواد",
   "Prix des matières enregistrés.": "تم حفظ أسعار المواد.",
   "Prix par défaut de chaque matière. Le prix réel facturé est défini à l'inscription de l'élève.": "هذا هو السعر الافتراضي لكل مادة؛ يُحدَّد السعر الحقيقي عند تسجيل التلميذ.",
-  "Aucune matière. Créez-en une pour définir un prix.": "لا توجد مواد. أنشئ مادة لتحديد السعر."
+  "Aucune matière. Créez-en une pour définir un prix.": "لا توجد مواد. أنشئ مادة لتحديد السعر.",
+  "Statistiques des créneaux": "إحصائيات الحصص",
+  "Basé sur l'emploi du temps (créneaux hebdomadaires récurrents).": "بناءً على جدول الحصص (حصص أسبوعية متكررة).",
+  "Heures hebdomadaires": "الساعات الأسبوعية",
+  "Séances hebdomadaires": "عدد الحصص الأسبوعية",
+  "تقدير شهري": "تقدير شهري",
+  "Estimation mensuelle basée sur l'emploi du temps (heures × 4).": "تقدير شهري بناءً على جدول الحصص (ساعات × 4).",
+  "Par matière": "حسب المادة",
+  "Par enseignant": "حسب الأستاذ",
+  "Séances / semaine": "عدد الحصص الأسبوعية",
+  "Heures / semaine": "الساعات الأسبوعية",
+  "séances": "حصص",
+  "heures": "ساعات",
+  "Non assigné": "غير معيّن",
+  "Aucun créneau dans l'emploi du temps.": "لا توجد حصص في جدول الحصص."
 }
