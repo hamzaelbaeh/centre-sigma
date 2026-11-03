@@ -84,6 +84,7 @@ class StudentController extends Controller
         $paymentStatut = $data['payment_statut'] ?? 'Non payé';
         $paymentPaye = $data['payment_paye'] ?? null;
         unset($data['parents'], $data['subjects'], $data['subject_prix'], $data['payment_statut'], $data['payment_paye']);
+        $data['date_inscription'] = $data['date_inscription'] ?? now()->toDateString();
         $student = Student::create($data);
         $student->parents()->sync($parents);
         $this->syncStudentSubjects($student, $subjectIds, $subjectPrix);
@@ -150,7 +151,7 @@ class StudentController extends Controller
     public function updateStatut(Request $request, Student $student)
     {
         $data = $request->validate([
-            'statut' => 'required|in:Actif,Suspendu,Transféré,Abandonné,Diplômé,Exclu',
+            'statut' => 'required|in:Actif,Suspendu temporairement,Retiré,Suspendu,Transféré,Abandonné,Diplômé,Exclu',
         ]);
         $student->update(['statut' => $data['statut']]);
         return back()->with('success', __('Statut élève mis à jour.'));
@@ -333,36 +334,30 @@ class StudentController extends Controller
      */
     private function createInitialMensualite(Student $student, string $paymentStatut, $paymentPaye): void
     {
-        $montant = $student->monthlyFeeAmount();
-        if ($montant <= 0) {
-            return;
-        }
-        $periode = now()->format('Y-m');
-        $paye = 0.0;
-        if ($paymentStatut === 'Soldé') {
-            $paye = $montant;
-        } elseif ($paymentStatut === 'Partiel') {
-            $paye = min((float) $paymentPaye, $montant);
-        }
-        $statut = $paye <= 0 ? 'Non payé' : ($paye >= $montant ? 'Soldé' : 'Partiel');
+        $student->load('subjects');
+        $from = $student->date_inscription ? \Carbon\Carbon::parse($student->date_inscription) : now();
+        $periode = $from->format('Y-m');
+        $b = \App\Services\SessionBilling::breakdown($student->class_id, \App\Services\SessionBilling::studentSubjects($student), $periode, $from);
+        $paye = $paymentStatut === 'Soldé' ? $b['total'] : ($paymentStatut === 'Partiel' ? (float) $paymentPaye : 0);
+        \App\Services\SessionBilling::createInvoice($student, $periode, $from, $paye);
+    }
 
-        $payment = Payment::create([
-            'student_id' => $student->id,
-            'type' => 'Mensualité',
-            'montant' => $montant,
-            'paye' => $paye,
-            'periode' => $periode,
-            'statut' => $statut,
-            'school_year_id' => $student->school_year_id,
-        ]);
-
-        if ($paye > 0) {
-            PaymentTransaction::create([
-                'payment_id' => $payment->id,
-                'date' => now()->toDateString(),
-                'montant' => $paye,
-                'mode' => 'Espèces',
-            ]);
+    /** AJAX: remaining sessions this month + amount due, per subject. */
+    public function billingPreview(Request $request)
+    {
+        $classId = $request->integer('class_id') ?: null;
+        $subjects = [];
+        foreach ((array) $request->input('subjects', []) as $id => $prix) {
+            $subjects[(int) $id] = (float) $prix;
         }
+        $from = $request->filled('date') ? \Carbon\Carbon::parse($request->input('date')) : now();
+        return response()->json(\App\Services\SessionBilling::breakdown($classId, $subjects, $from->format('Y-m'), $from));
+    }
+
+    public function withdraw(Student $student)
+    {
+        $student->update(['statut' => \App\Services\SessionBilling::WITHDRAWN, 'retire_at' => now()]);
+        \App\Models\StudentAlert::where('student_id', $student->id)->whereNull('read_at')->update(['read_at' => now()]);
+        return back()->with('success', __('التلميذ تسجّل كمنسحب (ما مهتمش).'));
     }
 }

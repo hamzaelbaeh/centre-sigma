@@ -16,12 +16,19 @@
  <p><strong>{{ __('Inscription:') }}</strong> {{ optional($student->date_inscription)->format('d/m/Y') }}</p>
  <p><strong>{{ __('Massar:') }}</strong> {{ $student->code_massar }}</p>
 
+ @if($student->statut !== 'Retiré')
+ <form method="POST" action="{{ route('students.withdraw', $student) }}" style="margin-top:12px" onsubmit="return confirm('تأكيد: التلميذ ما مهتمش / غادي يوقف؟')">@csrf
+  <button class="btn btn-outline" type="submit" style="color:#b91c1c;border-color:#b91c1c">ما مهتمش / غادي يوقف</button>
+ </form>
+ @else
+ <p class="muted" style="margin-top:12px">منسحب منذ {{ optional($student->retire_at)->format('d/m/Y') }}</p>
+ @endif
  <h3 style="margin-top:16px">{{ __('Mettre non actif') }}</h3>
  <p class="muted" style="margin-bottom:8px">{{ __('Changer rapidement le statut (Suspendu, Abandonné, etc.).') }}</p>
  <form method="POST" action="{{ route('students.statut', $student) }}" class="filters" style="padding:0;border:0;box-shadow:none;background:transparent">
   @csrf
   <select class="form-select" name="statut" style="min-width:180px">
-   @foreach(['Actif','Suspendu','Transféré','Abandonné','Diplômé','Exclu'] as $s)
+   @foreach(['Actif','Suspendu temporairement','Retiré','Suspendu','Transféré','Abandonné','Diplômé','Exclu'] as $s)
     <option value="{{ $s }}" @selected($student->statut===$s)>{{ __($s) }}</option>
    @endforeach
   </select>

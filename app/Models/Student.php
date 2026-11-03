@@ -26,11 +26,11 @@ class Student extends Model
 
     protected $fillable = [
         'matricule','nom','prenom','date_naissance','lieu_naissance','sexe','cin','telephone',
-        'email','adresse','niveau_scolaire','class_id','date_inscription','statut','code_massar','photo','school_year_id',
+        'email','adresse','niveau_scolaire','class_id','date_inscription','statut','code_massar','photo','school_year_id','suspendu_at','retire_at',
     ];
     protected function casts(): array
     {
-        return ['date_naissance'=>'date','date_inscription'=>'date'];
+        return ['date_naissance'=>'date','date_inscription'=>'date','suspendu_at'=>'datetime','retire_at'=>'datetime'];
     }
     public function getFullNameAttribute(): string { return trim($this->nom.' '.$this->prenom); }
     public function schoolClass(): BelongsTo { return $this->belongsTo(SchoolClass::class, 'class_id'); }
@@ -44,6 +44,7 @@ class Student extends Model
     }
     public function payments(): HasMany { return $this->hasMany(Payment::class); }
     public function attendances(): HasMany { return $this->hasMany(Attendance::class); }
+    public function alerts(): HasMany { return $this->hasMany(StudentAlert::class); }
     public function departures(): HasMany { return $this->hasMany(Departure::class); }
 
     /** Sum of enrolled subject prices (pivot.prix, else subject.prix as safety). */

@@ -17,12 +17,12 @@
 <thead><tr><th>{{ __('ÉLÈVE') }}</th><th>{{ __('PRÉSENT') }}</th><th>{{ __('ABSENT') }}</th><th>{{ __('RETARD') }}</th><th>{{ __('JUSTIFIÉ') }}</th><th>{{ __('MOTIF') }}</th></tr></thead>
 <tbody>
 @foreach($students as $st)
-@php $ex=$existing->get($st->id); $stt=$ex->status ?? 'present'; @endphp
-<tr>
-<td>{{ $st->full_name }}</td>
-<td><input type="radio" name="records[{{ $st->id }}][status]" value="present" @checked($stt==='present')></td>
+@php $ex=$existing->get($st->id); $susp=$st->statut==='Suspendu temporairement'; $stt=$ex->status ?? ($susp?'absent':'present'); @endphp
+<tr @if($susp) style="background:#fef2f2" @endif>
+<td>{{ $st->full_name }} @if($susp)<span class="badge badge-red">موقوف مؤقتاً — خاصو يخلّص</span>@endif</td>
+<td><input type="radio" name="records[{{ $st->id }}][status]" value="present" @checked($stt==='present') @disabled($susp)></td>
 <td><input type="radio" name="records[{{ $st->id }}][status]" value="absent" @checked($stt==='absent')></td>
-<td><input type="radio" name="records[{{ $st->id }}][status]" value="retard" @checked($stt==='retard')></td>
+<td><input type="radio" name="records[{{ $st->id }}][status]" value="retard" @checked($stt==='retard') @disabled($susp)></td>
 <td><input type="checkbox" name="records[{{ $st->id }}][justifie]" value="1" @checked($ex->justifie ?? false)></td>
 <td><input class="form-input" name="records[{{ $st->id }}][motif]" value="{{ $ex->motif ?? '' }}"></td>
 </tr>

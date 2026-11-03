@@ -18,7 +18,7 @@ class AttendanceController extends Controller
         $subjectId = $request->get('subject_id');
 
         $students = $classId
-            ? Student::where('class_id', $classId)->where('statut','Actif')->orderBy('nom')->get()
+            ? Student::where('class_id', $classId)->whereIn('statut',['Actif', \App\Services\SessionBilling::SUSPENDED])->orderBy('nom')->get()
             : collect();
 
         $existing = Attendance::whereDate('date', $date)
@@ -43,7 +43,15 @@ class AttendanceController extends Controller
             'date' => 'required|date',
             'records' => 'required|array',
         ]);
+        $blocked = 0;
         foreach ($request->records as $studentId => $row) {
+            $student = Student::find($studentId);
+            if (!$student) continue;
+            $status = $row['status'] ?? 'present';
+            if ($student->statut === \App\Services\SessionBilling::SUSPENDED && in_array($status, ['present','retard'])) {
+                $blocked++;
+                continue; // cannot be marked present until paid
+            }
             Attendance::updateOrCreate(
                 [
                     'student_id' => $studentId,
@@ -57,8 +65,11 @@ class AttendanceController extends Controller
                     'motif' => $row['motif'] ?? null,
                 ]
             );
+            \App\Services\SessionBilling::checkAfterAttendance($student->fresh());
         }
-        return back()->with('success', __('Présences enregistrées.'));
+        $msg = __('Présences enregistrées.');
+        if ($blocked) $msg .= ' — '.$blocked.' تلميذ موقوف مؤقتاً (خاصو يخلّص) ما تسجّلش حاضر.';
+        return back()->with('success', $msg);
     }
 
     public function absences(Request $request)

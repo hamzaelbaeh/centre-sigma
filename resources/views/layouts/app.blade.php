@@ -34,6 +34,7 @@
         ]],
         ['group' => __('FINANCES'), 'items' => [
             ['route'=>'payments.index','label'=>__('Paiements élèves'),'match'=>'payments.*'],
+            ['route'=>'payments.stats','label'=>'إحصائيات الأداء','match'=>'payments.stats'],
             ['route'=>'fees.index','label'=>__('Config. frais'),'match'=>'fees.*'],
             ['route'=>'payroll_teachers.index','label'=>__('Paie enseignants'),'match'=>'payroll_teachers.*'],
             ['route'=>'staff.index','label'=>__('Employés admin.'),'match'=>'staff.*'],
@@ -91,6 +92,8 @@
                 <a href="{{ route('locale.switch', 'fr') }}" class="lang-btn {{ $locale==='fr' ? 'active' : '' }}" title="Français">FR</a>
                 <a href="{{ route('locale.switch', 'ar') }}" class="lang-btn {{ $locale==='ar' ? 'active' : '' }}" title="العربية">AR</a>
             </div>
+            @php $alertCount = \Illuminate\Support\Facades\Schema::hasTable('student_alerts') ? \App\Models\StudentAlert::whereNull('read_at')->count() : 0; @endphp
+            <a href="{{ route('payments.stats') }}#alerts" title="الإشعارات" style="position:relative;font-size:20px;text-decoration:none;margin:0 8px">🔔@if($alertCount)<span style="position:absolute;top:-6px;right:-10px;background:#dc2626;color:#fff;border-radius:999px;font-size:11px;padding:1px 6px">{{ $alertCount }}</span>@endif</a>
             <div class="user-chip">
                 <div class="avatar">{{ strtoupper(substr(auth()->user()->name ?? 'A',0,1)) }}</div>
                 <div style="font-size:12.5px;line-height:1.2">

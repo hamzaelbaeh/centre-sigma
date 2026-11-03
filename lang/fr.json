@@ -529,5 +529,7 @@
   "séances": "séances",
   "heures": "heures",
   "Non assigné": "Non assigné",
-  "Aucun créneau dans l'emploi du temps.": "Aucun créneau dans l'emploi du temps."
+  "Aucun créneau dans l'emploi du temps.": "Aucun créneau dans l'emploi du temps.",
+  "Suspendu temporairement": "Suspendu temporairement",
+  "Retiré": "Retiré (non intéressé)"
 }

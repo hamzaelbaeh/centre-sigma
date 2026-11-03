@@ -529,5 +529,7 @@
   "séances": "حصص",
   "heures": "ساعات",
   "Non assigné": "غير معيّن",
-  "Aucun créneau dans l'emploi du temps.": "لا توجد حصص في جدول الحصص."
+  "Aucun créneau dans l'emploi du temps.": "لا توجد حصص في جدول الحصص.",
+  "Suspendu temporairement": "موقوف مؤقتاً",
+  "Retiré": "منسحب"
 }

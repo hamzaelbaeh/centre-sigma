@@ -5,7 +5,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class Subject extends Model
 {
-    protected $fillable = ['nom','code','niveau','heures_semaine','prix'];
+    protected $fillable = ['nom','code','niveau','heures_semaine','prix','sessions_per_month'];
     protected function casts(): array
     {
         return [

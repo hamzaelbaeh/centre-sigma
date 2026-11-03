@@ -31,6 +31,7 @@ class SubjectController extends Controller
             'niveau' => 'nullable|string',
             'heures_semaine' => 'nullable|numeric',
             'prix' => 'nullable|numeric|min:0',
+            'sessions_per_month' => 'nullable|integer|min:1|max:60',
             'classes' => 'nullable|array',
             'teachers' => 'nullable|array',
         ]);
@@ -59,6 +60,7 @@ class SubjectController extends Controller
             'niveau' => 'nullable|string',
             'heures_semaine' => 'nullable|numeric',
             'prix' => 'nullable|numeric|min:0',
+            'sessions_per_month' => 'nullable|integer|min:1|max:60',
             'classes' => 'nullable|array',
             'teachers' => 'nullable|array',
         ]);

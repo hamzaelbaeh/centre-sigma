@@ -44,7 +44,9 @@ Route::middleware('auth')->group(function () {
     Route::get('payments/export', [ExportController::class, 'payments'])->name('payments.export');
     Route::get('reports/export', [ExportController::class, 'reports'])->name('reports.export');
 
+    Route::get('students/billing-preview', [StudentController::class, 'billingPreview'])->name('students.billing_preview');
     Route::resource('students', StudentController::class);
+    Route::post('students/{student}/withdraw', [StudentController::class, 'withdraw'])->name('students.withdraw');
     Route::post('students/{student}/statut', [StudentController::class, 'updateStatut'])->name('students.statut');
     Route::post('students/{student}/payments/cancel', [StudentController::class, 'cancelPayments'])->name('students.payments.cancel');
     Route::resource('parents', ParentController::class)->except(['show']);
@@ -64,6 +66,8 @@ Route::middleware('auth')->group(function () {
     Route::get('payments', [PaymentController::class, 'index'])->name('payments.index');
     Route::post('payments/{payment}/encaisser', [PaymentController::class, 'encaisser'])->name('payments.encaisser');
     Route::post('payments/generate', [PaymentController::class, 'generateMensualites'])->name('payments.generate');
+    Route::get('payments/stats', [PaymentController::class, 'stats'])->name('payments.stats');
+    Route::post('alerts/{alert}/read', [PaymentController::class, 'readAlert'])->name('alerts.read');
     Route::get('payments/impayes', [PaymentController::class, 'impayes'])->name('payments.impayes');
 
     Route::get('fees', [FeeController::class, 'index'])->name('fees.index');

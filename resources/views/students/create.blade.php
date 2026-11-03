@@ -40,9 +40,12 @@
   <label>{{ __('Classe') }} <span class="muted">({{ __('optionnel') }})</span></label>
   <select class="form-select" style="width:100%" name="class_id"><option value="">—</option>@foreach($classes as $c)<option value="{{ $c->id }}" @selected(old('class_id', $student->class_id ?? '')==$c->id)>{{ $c->nom }}</option>@endforeach</select>
   <div class="sub">{{ __('يتم توزيع التلاميذ على الأقسام يدوياً من صفحة الأقسام') }}</div>
+  @unless(isset($student))
+  <div id="billing-preview" class="sub" style="margin-top:8px;padding:8px 10px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;display:none"></div>
+  @endunless
 </div>
 <div class="form-row">
- <div class="form-group"><label>{{ __('Statut') }}</label><select class="form-select" style="width:100%" name="statut">@foreach(['Actif','Suspendu','Transféré','Abandonné','Diplômé','Exclu'] as $s)<option value="{{ $s }}" @selected(old('statut', $student->statut ?? 'Actif')==$s)>{{ __($s) }}</option>@endforeach</select></div>
+ <div class="form-group"><label>{{ __('Statut') }}</label><select class="form-select" style="width:100%" name="statut">@foreach(['Actif','Suspendu temporairement','Retiré','Suspendu','Transféré','Abandonné','Diplômé','Exclu'] as $s)<option value="{{ $s }}" @selected(old('statut', $student->statut ?? 'Actif')==$s)>{{ __($s) }}</option>@endforeach</select></div>
  <div class="form-group"><label>{{ __('Code Massar') }}</label><input class="form-input" style="width:100%" name="code_massar" value="{{ old('code_massar', $student->code_massar ?? '') }}"></div>
 </div>
 <div class="form-group"><label>{{ __('Photo') }}</label><input class="form-input" style="width:100%" type="file" name="photo" accept="image/*"></div>
@@ -100,4 +103,46 @@
 
 <button class="btn btn-gold" type="submit">{{ __('Enregistrer') }}</button>
 </form>
+@unless(isset($student))
+<script>
+(function(){
+  const cls = document.querySelector('select[name=class_id]');
+  const box = document.getElementById('billing-preview');
+  if (!cls || !box) return;
+  const dateInp = document.querySelector('input[name=date_inscription]');
+  function f(n){ return Number(n).toFixed(2) + ' DH'; }
+  let t;
+  function load(){
+    const p = new URLSearchParams();
+    if (cls.value) p.append('class_id', cls.value);
+    if (dateInp && dateInp.value) p.append('date', dateInp.value);
+    let any = false;
+    document.querySelectorAll('.subject-enroll-row').forEach(r => {
+      const c = r.querySelector('.subject-check'), i = r.querySelector('.subject-prix');
+      if (c && c.checked) { any = true; p.append('subjects['+c.value+']', i.value || 0); }
+    });
+    if (!cls.value) { box.style.display='none'; return; }
+    if (!any) { box.style.display='block'; box.innerHTML = 'اختار المواد باش يبان عدد الحصص المتبقية والمبلغ.'; return; }
+    fetch('{{ route('students.billing_preview') }}?' + p.toString(), {headers:{'Accept':'application/json'}})
+      .then(r => r.json()).then(d => {
+        let h = '<strong>الحصص المتبقية فهاد الشهر: ' + d.sessions + ' — المبلغ الواجب أداؤه: ' + f(d.total) + '</strong><br>';
+        d.lines.forEach(l => {
+          h += l.subject + ': ' + l.sessions + ' / ' + l.sessions_month + ' حصة × ' + f(l.session_price) + ' = ' + f(l.amount)
+             + (l.source === 'default' ? ' <span style="color:#b45309">(ما كاينش جدول لهاد المادة فالقسم)</span>' : '') + '<br>';
+        });
+        box.innerHTML = h; box.style.display = 'block';
+        const hint = document.getElementById('payment-total-hint'); if (hint) hint.textContent = Number(d.total).toFixed(2);
+        const st = document.getElementById('payment_statut'), pay = document.getElementById('payment_paye');
+        if (st && pay && st.value === 'Soldé') pay.value = Number(d.total).toFixed(2);
+      });
+  }
+  function q(){ clearTimeout(t); t = setTimeout(load, 250); }
+  cls.addEventListener('change', q);
+  if (dateInp) dateInp.addEventListener('change', q);
+  const sec = document.getElementById('student-subjects-section');
+  if (sec) { sec.addEventListener('change', q); sec.addEventListener('input', q); }
+  q();
+})();
+</script>
+@endunless
 @endsection
