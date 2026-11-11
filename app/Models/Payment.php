@@ -7,10 +7,10 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Payment extends Model
 {
-    protected $fillable = ['student_id','type','montant','paye','periode','sessions','details','full_amount','credit_in','credit_out','statut','school_year_id'];
+    protected $fillable = ['student_id','type','montant','paye','periode','sessions','details','full_amount','credit_in','credit_out','estimated','statut','school_year_id'];
     protected function casts(): array
     {
-        return ['montant'=>'decimal:2','paye'=>'decimal:2','full_amount'=>'decimal:2','credit_in'=>'decimal:2','credit_out'=>'decimal:2','details'=>'array'];
+        return ['montant'=>'decimal:2','paye'=>'decimal:2','full_amount'=>'decimal:2','credit_in'=>'decimal:2','credit_out'=>'decimal:2','estimated'=>'boolean','details'=>'array'];
     }
     public function student(): BelongsTo { return $this->belongsTo(Student::class); }
     public function schoolYear(): BelongsTo { return $this->belongsTo(SchoolYear::class); }

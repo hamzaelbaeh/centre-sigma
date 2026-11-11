@@ -7,8 +7,10 @@
 <a class="btn btn-ghost" href="{{ route('payments.export', request()->query()) }}">{{ __('Excel') }}</a>
 <form method="POST" action="{{ route('payments.generate') }}">@csrf
 <input type="hidden" name="periode" value="{{ $periode }}">
-<button class="btn btn-gold" type="submit">{{ __('Générer les mensualités') }}</button>
+<button class="btn btn-gold" type="submit" onclick="return confirm({{ \Illuminate\Support\Js::from(__('Générer les factures du mois :m ? (fin de mois : recalcule aussi les inscriptions du mois précédent selon l\'emploi du temps réel)', ['m' => $periode])) }})">{{ __('Générer les mensualités') }}</button>
 </form>
+<a class="btn btn-ghost" href="{{ route('reports.monthly', ['periode' => $periode]) }}" target="_blank" rel="noopener">{{ __('Rapport mensuel (PDF) — imprimer') }}</a>
+<a class="btn btn-ghost" href="{{ route('reports.monthly.download', ['periode' => $periode]) }}">{{ __('Télécharger le rapport') }}</a>
 </div></div>
 <div class="grid grid-4" style="margin-bottom:14px">
 <div class="card"><div class="stat-num" style="font-size:20px">{!! money_ltr($today) !!}</div><div class="stat-label">{{ __("Encaissé aujourd'hui") }}</div></div>

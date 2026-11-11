@@ -3,6 +3,7 @@
 @section('content')
 <div class="page-head"><div><h1>{{ __('Emploi du temps') }}</h1></div>
 <div class="actions"><button class="btn btn-ghost" onclick="window.print()">{{ __('Imprimer') }}</button></div></div>
+<div class="card muted" style="padding:8px 12px;margin-bottom:10px;font-size:13px">{{ __('Le tarif des séances suit l\'emploi du temps réellement tenu : la version de chaque semaine est figée à sa fin ; vos modifications s\'appliquent à la semaine en cours et aux suivantes.') }}</div>
 <form class="filters card" method="GET">
 <select name="vue" onchange="this.form.submit()"><option value="classe" @selected($view==='classe')>{{ __('Vue par classe') }}</option><option value="enseignant" @selected($view==='enseignant')>{{ __('Vue par enseignant') }}</option></select>
 @if($view==='enseignant')

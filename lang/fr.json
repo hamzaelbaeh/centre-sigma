@@ -555,5 +555,18 @@
   "À payer le mois 2": "À payer le mois 2",
   "Cochez des matières pour voir le calcul.": "Cochez des matières pour voir le calcul.",
   "Ce numéro de téléphone existe déjà pour un autre parent.": "Ce numéro de téléphone existe déjà pour un autre parent.",
-  "CSV : nom, prenom, date_naissance, sexe, telephone, email, adresse, classe, statut, code_massar, niveau_scolaire, parent_nom, parent_prenom, parent_telephone": "CSV : nom, prenom, date_naissance, sexe, telephone, email, adresse, classe, statut, code_massar, niveau_scolaire, parent_nom, parent_prenom, parent_telephone"
+  "CSV : nom, prenom, date_naissance, sexe, telephone, email, adresse, classe, statut, code_massar, niveau_scolaire, parent_nom, parent_prenom, parent_telephone": "CSV : nom, prenom, date_naissance, sexe, telephone, email, adresse, classe, statut, code_massar, niveau_scolaire, parent_nom, parent_prenom, parent_telephone",
+  ":n facture(s) d'inscription recalculée(s) selon l'emploi du temps réel.": ":n facture(s) d'inscription recalculée(s) selon l'emploi du temps réel.",
+  "Consommé ce mois (estimation)": "Consommé ce mois (estimation)",
+  "Crédit reporté (estimation)": "Crédit reporté (estimation)",
+  "Estimation selon l'emploi du temps ; le calcul final se fait à la fin du mois selon les séances réellement tenues.": "Estimation selon l'emploi du temps ; le calcul final se fait à la fin du mois selon les séances réellement tenues.",
+  "Générer les factures du mois :m ? (fin de mois : recalcule aussi les inscriptions du mois précédent selon l'emploi du temps réel)": "Générer les factures du mois :m ? (fin de mois : recalcule aussi les inscriptions du mois précédent selon l'emploi du temps réel)",
+  "Le parent paie le mois COMPLET à l'inscription. Montant consommé = séances tenues de l'inscription à la fin du mois × prix de la séance ; la différence est un crédit déduit du mois suivant.": "Le parent paie le mois COMPLET à l'inscription. Montant consommé = séances tenues de l'inscription à la fin du mois × prix de la séance ; la différence est un crédit déduit du mois suivant.",
+  "Rapport mensuel (PDF) — imprimer": "Rapport mensuel (PDF) — imprimer",
+  "Séances par semaine (estimation)": "Séances par semaine (estimation)",
+  "Télécharger le rapport": "Télécharger le rapport",
+  "Utilisé seulement comme estimation / secours ; la facturation se base sur l'emploi du temps réellement tenu.": "Utilisé seulement comme estimation / secours ; la facturation se base sur l'emploi du temps réellement tenu.",
+  "estimation": "estimation",
+  "À payer le mois 2 (estimation)": "À payer le mois 2 (estimation)",
+  "Le tarif des séances suit l'emploi du temps réellement tenu : la version de chaque semaine est figée à sa fin ; vos modifications s'appliquent à la semaine en cours et aux suivantes.": "Le tarif des séances suit l'emploi du temps réellement tenu : la version de chaque semaine est figée à sa fin ; vos modifications s'appliquent à la semaine en cours et aux suivantes."
 }

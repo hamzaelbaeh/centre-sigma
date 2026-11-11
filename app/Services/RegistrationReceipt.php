@@ -54,6 +54,7 @@ class RegistrationReceipt
             'subjects' => collect($lines)->pluck('subject')->implode('، '),
             'full' => $full, 'consumed' => $consumed, 'credit' => $credit, 'cash' => $cash,
             'next_due' => max(0, $full - $credit),
+            'estimated' => $pay ? (bool) $pay->estimated : false,
             'receipt_no' => 'REC-'.str_pad((string) ($pay?->id ?? $student->id), 5, '0', STR_PAD_LEFT),
             'date' => \Carbon\Carbon::parse($date)->format('d/m/Y'),
             'reg_date' => optional($student->date_inscription)->format('d/m/Y') ?: '—',
@@ -66,13 +67,11 @@ class RegistrationReceipt
     public static function pdf(Student $student): string
     {
         $data = self::data($student);
-        $n = count($data['lines']);
-        $start = $n <= 3 ? 0 : ($n <= 5 ? 1 : 2);
-        for ($level = $start; $level <= 2; $level++) {
+        for ($level = 0; $level <= 3; $level++) {
             $mpdf = self::make();
             $mpdf->SetTitle('Reçu d\'inscription '.$student->matricule);
             $mpdf->WriteHTML(view('receipts.registration', $data + ['level' => $level])->render());
-            if ($mpdf->page <= 1 || $level === 2) {
+            if ($mpdf->page <= 1 || $level === 3) {
                 return $mpdf->Output('', \Mpdf\Output\Destination::STRING_RETURN);
             }
         }

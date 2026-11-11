@@ -11,6 +11,7 @@ class PaymentController extends Controller
 {
     public function index(Request $request)
     {
+        \App\Services\SessionBilling::finalizeEstimates(); // months that already ended are recomputed from the real timetable
         $periode = $request->get('periode', now()->format('Y-m'));
         $q = Payment::with(['student.schoolClass'])->notCancelled();
         if ($periode) $q->where('periode', $periode);
@@ -57,22 +58,9 @@ class PaymentController extends Controller
     public function generateMensualites(Request $request)
     {
         $periode = $request->get('periode', now()->format('Y-m'));
-        $year = SchoolYear::active();
-        $students = Student::with(['subjects'])
-            ->whereIn('statut', ['Actif', \App\Services\SessionBilling::SUSPENDED])
-            ->get();
-        $created = 0;
-        foreach ($students as $student) {
-            $exists = Payment::where('student_id', $student->id)
-                ->where('type', 'Mensualité')
-                ->where('periode', $periode)
-                ->where('statut', '!=', 'Annulé')
-                ->exists();
-            if ($exists) continue;
-            // Later months = full month (sessions per week x 4); any credit from registration is deducted.
-            if (\App\Services\SessionBilling::createInvoice($student, $periode, null, 0, $year?->id)) $created++;
-        }
-        return back()->with('success', __(':n mensualité(s) générée(s).', ['n' => $created]));
+        [$created, $finalized] = \App\Services\SessionBilling::closeMonthAndGenerate($periode);
+        return back()->with('success', __(':n mensualité(s) générée(s).', ['n' => $created])
+            .($finalized ? ' — '.__(':n facture(s) d\'inscription recalculée(s) selon l\'emploi du temps réel.', ['n' => $finalized]) : ''));
     }
 
     public function stats()

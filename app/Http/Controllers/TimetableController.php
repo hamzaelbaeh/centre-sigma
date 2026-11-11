@@ -5,6 +5,7 @@ use App\Models\SchoolClass;
 use App\Models\Subject;
 use App\Models\Teacher;
 use App\Models\TimetableSlot;
+use App\Services\TimetableSnapshot;
 use Illuminate\Http\Request;
 
 class TimetableController extends Controller
@@ -42,13 +43,17 @@ class TimetableController extends Controller
             'fin' => 'required|after:debut',
             'salle' => 'nullable|string',
         ]);
+        TimetableSnapshot::beforeChange();
         TimetableSlot::create($data);
+        TimetableSnapshot::afterChange();
         return back()->with('success', __('Créneau ajouté.'));
     }
 
     public function destroy(TimetableSlot $timetable)
     {
+        TimetableSnapshot::beforeChange();
         $timetable->delete();
+        TimetableSnapshot::afterChange();
         return back()->with('success', __('Créneau supprimé.'));
     }
 }

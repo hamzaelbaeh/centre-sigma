@@ -108,7 +108,7 @@
 
 <div class="form-group" id="initial-payment-section" style="margin-top:16px;padding-top:12px;border-top:1px solid #eee">
   <label>{{ __('Paiement initial (mensualité)') }}</label>
-  <div class="sub" style="margin-bottom:8px">{{ __('Le parent paie le mois COMPLET à l\'inscription. Le montant consommé ce mois = séances restantes × prix de la séance ; la différence est un crédit déduit du mois suivant.') }}</div>
+  <div class="sub" style="margin-bottom:8px">{{ __('Le parent paie le mois COMPLET à l\'inscription. Montant consommé = séances tenues de l\'inscription à la fin du mois × prix de la séance ; la différence est un crédit déduit du mois suivant.') }}</div>
   <div id="billing-preview" class="sub" style="margin-bottom:10px;padding:8px 10px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;display:none"></div>
   <div class="form-row">
     <div class="form-group">
@@ -162,28 +162,36 @@
 (function(){
   const box = document.getElementById('billing-preview');
   const sec = document.getElementById('student-subjects-section');
+  const cls = document.querySelector('select[name=class_id]');
+  const dateInp = document.querySelector('input[name=date_inscription]');
   if (!box || !sec) return;
   const fmt = n => Number(n).toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2, useGrouping:false}) + ' DH';
-  const L = {full:@json(__('Mois complet payé')), consumed:@json(__('Consommé ce mois')), credit:@json(__('Crédit reporté')), next:@json(__('À payer le mois 2')), unit:@json(__('Prix séance')), rem:@json(__('restantes')), pick:@json(__('Cochez des matières pour voir le calcul.'))};
-  function render(){
-    let full = 0, consumed = 0, rows = '';
+  const L = {full:@json(__('Mois complet payé')), consumed:@json(__('Consommé ce mois (estimation)')), credit:@json(__('Crédit reporté (estimation)')), next:@json(__('À payer le mois 2 (estimation)')), pick:@json(__('Cochez des matières pour voir le calcul.')), est:@json(__('estimation')), note:@json(__('Estimation selon l\'emploi du temps ; le calcul final se fait à la fin du mois selon les séances réellement tenues.'))};
+  let t;
+  function load(){
+    const p = new URLSearchParams(); let any = false;
+    if (cls && cls.value) p.append('class_id', cls.value);
+    if (dateInp && dateInp.value) p.append('date', dateInp.value);
     sec.querySelectorAll('.subject-enroll-row').forEach(r => {
-      const c = r.querySelector('.subject-check'), p = r.querySelector('.subject-prix'), m = r.querySelector('.subject-remaining');
-      if (!c || !c.checked) return;
-      const prix = parseFloat(p.value) || 0, spm = parseInt(m.dataset.spm) || 8;
-      let rem = parseInt(m.value); if (isNaN(rem)) rem = spm; rem = Math.max(0, Math.min(rem, spm));
-      const unit = prix / spm, amount = rem >= spm ? prix : unit * rem;
-      full += prix; consumed += amount;
-      rows += '<div>' + c.closest('label').querySelector('span').childNodes[0].textContent.trim() + ': ' + rem + '/' + spm + ' × ' + fmt(unit) + ' = ' + fmt(amount) + '</div>';
+      const c = r.querySelector('.subject-check'), i = r.querySelector('.subject-prix');
+      if (c && c.checked) { any = true; p.append('subjects['+c.value+']', i.value || 0); }
     });
-    if (!rows) { box.innerHTML = L.pick; box.style.display = 'block'; return; }
-    const credit = Math.max(0, full - consumed);
-    box.innerHTML = rows + '<hr style="border:0;border-top:1px solid #e2e8f0;margin:6px 0">'
-      + '<strong>' + L.full + ': ' + fmt(full) + ' · ' + L.consumed + ': ' + fmt(consumed) + ' · ' + L.credit + ': ' + fmt(credit) + ' · ' + L.next + ': ' + fmt(Math.max(0, full - credit)) + '</strong>';
-    box.style.display = 'block';
+    if (!any) { box.innerHTML = L.pick; box.style.display = 'block'; return; }
+    fetch('{{ route('students.billing_preview') }}?' + p.toString(), {headers:{'Accept':'application/json'}}).then(r => r.json()).then(d => {
+      let h = '';
+      d.lines.forEach(l => {
+        h += '<div>' + l.subject + ': ' + l.sessions + '/' + l.sessions_month + ' × ' + fmt(l.session_price) + ' = ' + fmt(l.amount) + (l.source !== 'actual' ? ' <span style="color:#b45309">(' + L.est + ')</span>' : '') + '</div>';
+      });
+      const credit = Math.max(0, d.full - d.total);
+      h += '<hr style="border:0;border-top:1px solid #e2e8f0;margin:6px 0"><strong>' + L.full + ': ' + fmt(d.full) + ' · ' + L.consumed + ': ' + fmt(d.total) + ' · ' + L.credit + ': ' + fmt(credit) + ' · ' + L.next + ': ' + fmt(Math.max(0, d.full - credit)) + '</strong><div class="muted" style="margin-top:4px">' + L.note + '</div>';
+      box.innerHTML = h; box.style.display = 'block';
+    });
   }
-  sec.addEventListener('change', render); sec.addEventListener('input', render);
-  render();
+  function q(){ clearTimeout(t); t = setTimeout(load, 300); }
+  sec.addEventListener('change', q); sec.addEventListener('input', q);
+  if (cls) cls.addEventListener('change', q);
+  if (dateInp) dateInp.addEventListener('change', q);
+  q();
 })();
 </script>
 @endunless

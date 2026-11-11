@@ -1,7 +1,6 @@
 @php
     $selectedIds = collect(old('subjects', isset($student) ? $student->subjects->pluck('id')->all() : []))->map(fn($id)=>(int)$id);
     $oldPrix = old('subject_prix', []);
-    $oldRemaining = old('subject_remaining', []);
 @endphp
 <div class="form-group" id="student-subjects-section">
   <label>{{ __('Matières') }}</label>
@@ -10,7 +9,7 @@
     @forelse($subjects as $sub)
       @php
         $checked = $selectedIds->contains((int)$sub->id);
-        $pivotPrix = isset($student) ? optional($student->subjects->firstWhere('id', $sub->id))->pivot->prix : null;
+        $pivotPrix = isset($student) ? $student->subjects->firstWhere("id", $sub->id)?->pivot?->prix : null;
         $defaultPrix = $oldPrix[$sub->id] ?? $oldPrix[(string)$sub->id] ?? ($pivotPrix !== null && $pivotPrix !== '' ? $pivotPrix : $sub->prix);
       @endphp
       <div class="subject-enroll-row" style="display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid #eee">
@@ -25,15 +24,6 @@
                  data-subject-id="{{ $sub->id }}" @disabled(!$checked)>
           <span class="muted">DH</span>
         </label>
-        @unless(isset($student))
-        <label style="display:flex;align-items:center;gap:6px;margin:0">
-          <span class="muted">{{ __('Séances restantes ce mois') }}</span>
-          <input class="form-input subject-remaining" style="width:80px" type="number" step="1" min="0" max="{{ $sub->sessions_per_month }}"
-                 name="subject_remaining[{{ $sub->id }}]" value="{{ $oldRemaining[$sub->id] ?? $oldRemaining[(string)$sub->id] ?? $sub->sessions_per_month }}"
-                 data-spm="{{ $sub->sessions_per_month }}" @disabled(!$checked)>
-          <span class="muted">/ <span class="ltr-num">{{ $sub->sessions_per_month }}</span></span>
-        </label>
-        @endunless
       </div>
     @empty
       <div class="muted">{{ __('Aucune matière') }}</div>
@@ -56,8 +46,6 @@
       const prixInput = row.querySelector('.subject-prix');
       if (!check || !prixInput) return;
       prixInput.disabled = !check.checked;
-      const remInput = row.querySelector('.subject-remaining');
-      if (remInput) remInput.disabled = !check.checked;
       if (check.checked) {
         const v = parseFloat(prixInput.value);
         if (!isNaN(v)) sum += v;
@@ -79,8 +67,6 @@
       if (prixInput && e.target.checked && (prixInput.value === '' || prixInput.disabled)) {
         prixInput.value = e.target.dataset.defaultPrix || '0';
       }
-      const remInput = row && row.querySelector('.subject-remaining');
-      if (remInput && e.target.checked && remInput.value === '') remInput.value = e.target.dataset.spm || '';
     }
     recalc();
   });

@@ -12,6 +12,7 @@ use App\Http\Controllers\LocaleController;
 use App\Http\Controllers\FeeController;
 use App\Http\Controllers\ParentController;
 use App\Http\Controllers\PaymentController;
+use App\Http\Controllers\MonthlyReportController;
 use App\Http\Controllers\ReceiptController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\SettingController;
@@ -45,6 +46,7 @@ Route::middleware('auth')->group(function () {
     Route::get('payments/export', [ExportController::class, 'payments'])->name('payments.export');
     Route::get('reports/export', [ExportController::class, 'reports'])->name('reports.export');
 
+    Route::get('students/billing-preview', [StudentController::class, 'billingPreview'])->name('students.billing_preview');
     Route::get('students/{student}/receipt', [ReceiptController::class, 'show'])->name('students.receipt');
     Route::get('students/{student}/receipt/download', [ReceiptController::class, 'download'])->name('students.receipt.download');
     Route::resource('students', StudentController::class);
@@ -107,6 +109,8 @@ Route::middleware('auth')->group(function () {
     Route::get('documents', [DocumentController::class, 'index'])->name('documents.index');
     Route::get('documents/print/{type}', [DocumentController::class, 'print'])->name('documents.print');
 
+    Route::get('reports/monthly-pdf', [MonthlyReportController::class, 'show'])->name('reports.monthly');
+    Route::get('reports/monthly-pdf/download', [MonthlyReportController::class, 'download'])->name('reports.monthly.download');
     Route::get('reports', [ReportController::class, 'index'])->name('reports.index');
 
     Route::resource('users', UserController::class)->except(['show']);

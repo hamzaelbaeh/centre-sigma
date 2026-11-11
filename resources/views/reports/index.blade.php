@@ -2,7 +2,7 @@
 @section('title',__('Rapports'))
 @section('content')
 <div class="page-head"><div><h1>{{ __('Rapports') }}</h1></div>
-<div class="actions"><button class="btn btn-ghost" onclick="window.print()">{{ __('Imprimer') }}</button><a class="btn btn-ghost" href="{{ route('reports.export', ['tab' => $tab, 'periode' => $periode]) }}">{{ __('Excel') }}</a></div></div>
+<div class="actions"><a class="btn btn-ghost" href="{{ route('reports.monthly', ['periode' => $periode]) }}" target="_blank" rel="noopener">{{ __('Rapport mensuel (PDF) — imprimer') }}</a><a class="btn btn-ghost" href="{{ route('reports.monthly.download', ['periode' => $periode]) }}">{{ __('Télécharger le rapport') }}</a><button class="btn btn-ghost" onclick="window.print()">{{ __('Imprimer') }}</button><a class="btn btn-ghost" href="{{ route('reports.export', ['tab' => $tab, 'periode' => $periode]) }}">{{ __('Excel') }}</a></div></div>
 <form class="filters card" method="GET">
 <input type="month" name="periode" value="{{ $periode }}">
 <input type="hidden" name="tab" value="{{ $tab }}">

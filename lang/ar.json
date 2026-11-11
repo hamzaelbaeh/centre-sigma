@@ -555,5 +555,18 @@
   "À payer le mois 2": "المطلوب فالشهر الثاني",
   "Cochez des matières pour voir le calcul.": "اختر المواد باش يبان الحساب.",
   "Ce numéro de téléphone existe déjà pour un autre parent.": "رقم الهاتف هذا مسجل عند ولي آخر.",
-  "CSV : nom, prenom, date_naissance, sexe, telephone, email, adresse, classe, statut, code_massar, niveau_scolaire, parent_nom, parent_prenom, parent_telephone": "CSV : nom, prenom, date_naissance, sexe, telephone, email, adresse, classe, statut, code_massar"
+  "CSV : nom, prenom, date_naissance, sexe, telephone, email, adresse, classe, statut, code_massar, niveau_scolaire, parent_nom, parent_prenom, parent_telephone": "CSV : nom, prenom, date_naissance, sexe, telephone, email, adresse, classe, statut, code_massar",
+  ":n facture(s) d'inscription recalculée(s) selon l'emploi du temps réel.": ":n فاتورة(فواتير) تسجيل أُعيد احتسابها حسب جدول الحصص الفعلي.",
+  "Consommé ce mois (estimation)": "المستهلك هذا الشهر (تقدير)",
+  "Crédit reporté (estimation)": "الرصيد المرحّل (تقدير)",
+  "Estimation selon l'emploi du temps ; le calcul final se fait à la fin du mois selon les séances réellement tenues.": "تقدير حسب جدول الحصص؛ الاحتساب النهائي يتم في نهاية الشهر حسب الحصص المنجزة فعلياً.",
+  "Générer les factures du mois :m ? (fin de mois : recalcule aussi les inscriptions du mois précédent selon l'emploi du temps réel)": "إنشاء فواتير شهر :m ؟ (في نهاية الشهر: يُعاد أيضاً احتساب تسجيلات الشهر السابق حسب جدول الحصص الفعلي)",
+  "Le parent paie le mois COMPLET à l'inscription. Montant consommé = séances tenues de l'inscription à la fin du mois × prix de la séance ; la différence est un crédit déduit du mois suivant.": "يؤدي الولي الشهر كاملاً عند التسجيل. المستهلك = الحصص المنجزة من تاريخ التسجيل إلى نهاية الشهر × ثمن الحصة؛ والفرق رصيد يُخصم من الشهر الموالي.",
+  "Rapport mensuel (PDF) — imprimer": "التقرير الشهري (PDF) — طباعة",
+  "Séances par semaine (estimation)": "الحصص في الأسبوع (تقدير)",
+  "Télécharger le rapport": "تحميل التقرير",
+  "Utilisé seulement comme estimation / secours ; la facturation se base sur l'emploi du temps réellement tenu.": "يُستعمل كتقدير/احتياط فقط؛ الفوترة تعتمد على جدول الحصص المنجز فعلياً.",
+  "estimation": "تقدير",
+  "À payer le mois 2 (estimation)": "المطلوب في الشهر الثاني (تقدير)",
+  "Le tarif des séances suit l'emploi du temps réellement tenu : la version de chaque semaine est figée à sa fin ; vos modifications s'appliquent à la semaine en cours et aux suivantes.": "تسعيرة الحصة تتبع جدول الحصص المنجز فعلياً: نسخة كل أسبوع تُجمَّد عند نهايته؛ وتعديلاتكم تسري على الأسبوع الحالي وما بعده."
 }

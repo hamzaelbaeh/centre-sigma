@@ -10,12 +10,13 @@ use App\Models\Subject;
 use Carbon\Carbon;
 
 /**
- * Session-based billing, independent of the timetable.
- * Sessions per month of a subject = subjects.sessions_per_week (default 2) x 4.
- * session_price = monthly fee (student_subject.prix) / sessions per month.
- * Registration month: the parent pays the FULL month; consumed = remaining sessions x session price;
- * the difference is a credit (advance) deducted from the next invoice.
- * Income stats use payments.paye per period = amount earned for that month (credit applied counts in the month it is used).
+ * Session-based billing driven by the timetable AS ACTUALLY HELD (weekly snapshots, see TimetableSnapshot).
+ * session_price = monthly fee (student_subject.prix) / sessions held that month for the student's class+subject.
+ * Registration month: the parent pays the FULL month; consumed = sessions held from the registration date to month end
+ * x session price (an ESTIMATE until the month is closed, then recomputed from the real timetable).
+ * The difference paid - consumed is a credit deducted from the next invoice.
+ * subjects.sessions_per_week (x4) is only the fallback/estimate when no timetable data exists.
+ * Income stats use payments.paye per period = amount earned for that month.
  */
 class SessionBilling
 {
@@ -24,10 +25,13 @@ class SessionBilling
 
     /**
      * @param array $subjects [subject_id => monthly prix]
-     * @param array|null $remaining [subject_id => remaining sessions this month] (null = full month)
+     * @param Carbon|null $from null = full month
      */
-    public static function breakdown(array $subjects, string $periode, ?array $remaining = null): array
+    public static function breakdown(?int $classId, array $subjects, string $periode, ?Carbon $from = null): array
     {
+        $start = Carbon::createFromFormat('Y-m-d', $periode.'-01')->startOfDay();
+        $end = $start->copy()->endOfMonth()->startOfDay();
+        $from = $from && $from->gt($start) ? $from->copy()->startOfDay() : $start;
         $models = Subject::whereIn('id', array_keys($subjects))->get()->keyBy('id');
         $lines = [];
         $total = 0.0; $full = 0.0; $sessions = 0;
@@ -35,16 +39,16 @@ class SessionBilling
             $sub = $models[$id] ?? null;
             if (!$sub) continue;
             $prix = (float) $prix;
-            $spm = $sub->sessions_per_month;
-            $rem = isset($remaining[$id]) && $remaining[$id] !== '' ? (int) $remaining[$id] : $spm;
-            $rem = max(0, min($rem, $spm));
-            $unit = round($prix / $spm, 2);
-            $amount = $rem >= $spm ? $prix : round($prix / $spm * $rem, 2);
+            $whole = TimetableSnapshot::held($classId, $sub, $start, $end);
+            $part = $from->equalTo($start) ? $whole : TimetableSnapshot::held($classId, $sub, $from, $end);
+            $unit = $whole['held'] > 0 ? round($prix / $whole['held'], 2) : 0;
+            $amount = $part['held'] >= $whole['held'] ? $prix : round($prix / $whole['held'] * $part['held'], 2);
             $lines[] = [
                 'subject_id' => (int) $id, 'subject' => $sub->nom, 'monthly' => $prix,
-                'sessions_month' => $spm, 'sessions' => $rem, 'session_price' => $unit, 'amount' => $amount,
+                'sessions_month' => $whole['held'], 'sessions' => $part['held'], 'session_price' => $unit,
+                'amount' => $amount, 'source' => $whole['source'] === 'actual' && $part['source'] === 'actual' ? 'actual' : ($whole['source'] === 'estimate' ? 'estimate' : 'mixed'),
             ];
-            $total += $amount; $full += $prix; $sessions += $rem;
+            $total += $amount; $full += $prix; $sessions += $part['held'];
         }
         return ['lines' => $lines, 'total' => round($total, 2), 'full' => round($full, 2), 'sessions' => $sessions, 'periode' => $periode];
     }
@@ -67,30 +71,92 @@ class SessionBilling
         return max(0, round((float) (clone $p)->sum('credit_out') - (float) $p->sum('credit_in'), 2));
     }
 
+    /** Money split of an invoice: [paye, credit_out] from consumed amount, credit used and cash received. */
+    private static function split(float $consumed, float $creditIn, float $cash): array
+    {
+        $creditUsed = min($creditIn, $consumed);
+        $net = max(0, $consumed - $creditUsed);
+        return [round(min($cash, $net) + $creditUsed, 2), max(0, round($cash - $net, 2)), $creditUsed];
+    }
+
+    private static function statut(float $paye, float $consumed): string
+    {
+        return $paye <= 0 && $consumed > 0 ? 'Non payé' : ($paye >= $consumed ? 'Soldé' : 'Partiel');
+    }
+
     /**
-     * @param array|null $remaining [subject_id => remaining sessions] for the registration month, null = full month
+     * @param Carbon|null $from registration date (consumed counted from that date); null = regular full-month invoice
      * @param float $cash cash received now (registration: the full month)
      */
-    public static function createInvoice(Student $student, string $periode, ?array $remaining = null, float $cash = 0, ?int $yearId = null): ?Payment
+    public static function createInvoice(Student $student, string $periode, ?Carbon $from = null, float $cash = 0, ?int $yearId = null): ?Payment
     {
-        $b = self::breakdown(self::studentSubjects($student), $periode, $remaining);
+        $b = self::breakdown($student->class_id, self::studentSubjects($student), $periode, $from);
         if ($b['full'] <= 0) return null;
+        $start = Carbon::createFromFormat('Y-m-d', $periode.'-01')->startOfDay();
+        $estimated = $from !== null && $from->copy()->startOfDay()->gt($start) && $start->copy()->endOfMonth()->gte(today());
         $consumed = $b['total'];
         $cash = min(max(0, $cash), $b['full']);
-        $creditIn = min(self::availableCredit($student), $consumed);
-        $paye = min($cash, max(0, $consumed - $creditIn)) + $creditIn;
-        $creditOut = max(0, round($cash - max(0, $consumed - $creditIn), 2));
+        [$paye, $creditOut, $creditIn] = self::split($consumed, min(self::availableCredit($student), $consumed), $cash);
         $payment = Payment::create([
             'student_id' => $student->id, 'type' => 'Mensualité', 'montant' => $consumed, 'paye' => $paye,
-            'full_amount' => $b['full'], 'credit_in' => $creditIn, 'credit_out' => $creditOut,
+            'full_amount' => $b['full'], 'credit_in' => $creditIn, 'credit_out' => $creditOut, 'estimated' => $estimated,
             'periode' => $periode, 'sessions' => $b['sessions'], 'details' => $b['lines'],
-            'statut' => $paye <= 0 && $consumed > 0 ? 'Non payé' : ($paye >= $consumed ? 'Soldé' : 'Partiel'),
+            'statut' => self::statut($paye, $consumed),
             'school_year_id' => $yearId ?? $student->school_year_id,
         ]);
         if ($cash > 0) {
             PaymentTransaction::create(['payment_id' => $payment->id, 'date' => now()->toDateString(), 'montant' => $cash, 'mode' => 'Espèces']);
         }
         return $payment;
+    }
+
+    /**
+     * Month close: recompute registration-month invoices that were only estimated, from the real (frozen) timetable.
+     * Applies to months before $beforePeriode and to any month that has already ended. Returns the number finalized.
+     */
+    public static function finalizeEstimates(?string $beforePeriode = null): int
+    {
+        $n = 0;
+        foreach (Payment::where('estimated', true)->where('statut', '!=', 'Annulé')->with('student')->get() as $p) {
+            $end = Carbon::createFromFormat('Y-m-d', $p->periode.'-01')->endOfMonth()->startOfDay();
+            if (!(($beforePeriode && $p->periode < $beforePeriode) || $end->lt(today()))) continue;
+            $s = $p->student;
+            if (!$s) continue;
+            $from = $s->date_inscription ? Carbon::parse($s->date_inscription) : null;
+            $b = self::breakdown($s->class_id, self::studentSubjects($s), $p->periode, $from);
+            $cash = (float) $p->transactions()->sum('montant');
+            [$paye, $creditOut, $creditIn] = self::split($b['total'], (float) $p->credit_in, $cash);
+            $p->update([
+                'montant' => $b['total'], 'paye' => $paye, 'credit_out' => $creditOut, 'credit_in' => $creditIn,
+                'full_amount' => $b['full'], 'sessions' => $b['sessions'], 'details' => $b['lines'], 'estimated' => false,
+                'statut' => self::statut($paye, $b['total']),
+            ]);
+            $n++;
+        }
+        return $n;
+    }
+
+    /**
+     * Month-end routine for invoices of month $periode:
+     *  1) registration-month estimates of earlier months are recomputed from the real timetable (credit becomes final);
+     *  2) a regular full-month invoice is created for every student without one (credit deducted).
+     * @return array{0:int,1:int} [invoices created, estimates finalized]
+     */
+    public static function closeMonthAndGenerate(string $periode): array
+    {
+        TimetableSnapshot::ensureCurrent();
+        $finalized = self::finalizeEstimates($periode);
+        $year = \App\Models\SchoolYear::active();
+        $created = 0;
+        $students = Student::with('subjects')->whereIn('statut', ['Actif', self::SUSPENDED])->get();
+        foreach ($students as $student) {
+            if ($student->date_inscription && $student->date_inscription->format('Y-m') > $periode) continue;
+            $exists = Payment::where('student_id', $student->id)->where('type', 'Mensualité')
+                ->where('periode', $periode)->where('statut', '!=', 'Annulé')->exists();
+            if ($exists) continue;
+            if (self::createInvoice($student, $periode, null, 0, $year?->id)) $created++;
+        }
+        return [$created, $finalized];
     }
 
     /** Oldest open invoice (nothing paid counts as unpaid; partial counts as unpaid too). */

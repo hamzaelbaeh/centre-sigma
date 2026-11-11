@@ -64,8 +64,6 @@ class StudentController extends Controller
             'subjects.*' => 'exists:subjects,id',
             'subject_prix' => 'nullable|array',
             'subject_prix.*' => 'nullable|numeric|min:0',
-            'subject_remaining' => 'nullable|array',
-            'subject_remaining.*' => 'nullable|integer|min:0|max:60',
             'payment_statut' => 'nullable|in:Non payé,Partiel,Soldé',
             'payment_paye' => 'nullable|numeric|min:0',
         ]);
@@ -92,14 +90,13 @@ class StudentController extends Controller
         }
         $subjectIds = $data['subjects'] ?? [];
         $subjectPrix = $data['subject_prix'] ?? [];
-        $remaining = $data['subject_remaining'] ?? [];
         $paymentStatut = $data['payment_statut'] ?? 'Non payé';
         $paymentPaye = $data['payment_paye'] ?? null;
         $parentIds = $data['parents'] ?? [];
-        unset($data['parents'], $data['parent_id'], $data['subjects'], $data['subject_prix'], $data['subject_remaining'], $data['payment_statut'], $data['payment_paye']);
+        unset($data['parents'], $data['parent_id'], $data['subjects'], $data['subject_prix'], $data['payment_statut'], $data['payment_paye']);
         $data['date_inscription'] = $data['date_inscription'] ?? now()->toDateString();
 
-        $student = DB::transaction(function () use ($data, $request, $np, $wantsNewParent, $parentIds, $subjectIds, $subjectPrix, $remaining, $paymentStatut, $paymentPaye) {
+        $student = DB::transaction(function () use ($data, $request, $np, $wantsNewParent, $parentIds, $subjectIds, $subjectPrix, $paymentStatut, $paymentPaye) {
             // parent: existing (picked) or matched by phone, else created inline with the next number
             $parent = null;
             if ($request->filled('parent_id')) {
@@ -118,7 +115,7 @@ class StudentController extends Controller
             $student->parents()->sync($parentIds);
             Matricule::refresh($student);
             $this->syncStudentSubjects($student, $subjectIds, $subjectPrix);
-            $this->createInitialMensualite($student, $paymentStatut, $paymentPaye, $remaining);
+            $this->createInitialMensualite($student, $paymentStatut, $paymentPaye);
             return $student;
         });
 
@@ -397,16 +394,29 @@ class StudentController extends Controller
     }
 
     /**
-     * First invoice at registration: parent pays the FULL month; consumed = remaining sessions x session price;
-     * the difference is kept as credit for the next month.
+     * First invoice at registration: parent pays the FULL month; consumed = sessions held from the registration date
+     * to month end x session price (estimate until the month is closed); the difference is credit for the next month.
      */
-    private function createInitialMensualite(Student $student, string $paymentStatut, $paymentPaye, array $remaining): void
+    private function createInitialMensualite(Student $student, string $paymentStatut, $paymentPaye): void
     {
         $student->load('subjects');
-        $periode = ($student->date_inscription ? \Carbon\Carbon::parse($student->date_inscription) : now())->format('Y-m');
-        $full = SessionBilling::breakdown(SessionBilling::studentSubjects($student), $periode, $remaining)['full'];
+        $from = $student->date_inscription ? \Carbon\Carbon::parse($student->date_inscription) : now();
+        $periode = $from->format('Y-m');
+        $full = SessionBilling::breakdown($student->class_id, SessionBilling::studentSubjects($student), $periode, $from)['full'];
         $cash = $paymentStatut === 'Soldé' ? $full : ($paymentStatut === 'Partiel' ? (float) $paymentPaye : 0);
-        SessionBilling::createInvoice($student, $periode, $remaining, $cash);
+        SessionBilling::createInvoice($student, $periode, $from, $cash);
+    }
+
+    /** AJAX: estimate shown at registration (sessions held from the date to month end per subject). */
+    public function billingPreview(Request $request)
+    {
+        $classId = $request->integer('class_id') ?: null;
+        $subjects = [];
+        foreach ((array) $request->input('subjects', []) as $id => $prix) {
+            $subjects[(int) $id] = (float) $prix;
+        }
+        $from = $request->filled('date') ? \Carbon\Carbon::parse($request->input('date')) : now();
+        return response()->json(SessionBilling::breakdown($classId, $subjects, $from->format('Y-m'), $from));
     }
 
     public function withdraw(Student $student)
