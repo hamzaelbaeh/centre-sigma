@@ -109,7 +109,7 @@
   </table>
 
   <table class="sum" style="margin-top:1.5mm">
-    <tr><td class="h">الشهر الكامل المؤدى</td><td class="h">{{ $estimated ? 'المستهلك هذا الشهر (تقدير)' : 'المستهلك هذا الشهر' }}</td><td class="h">{{ $estimated ? 'الرصيد المرحّل (تقدير)' : 'الرصيد المرحّل' }}</td><td class="h">{{ $estimated ? 'المطلوب في الشهر الثاني (تقدير)' : 'المطلوب في الشهر الثاني' }}</td></tr>
+    <tr><td class="h">الشهر الكامل المؤدى</td><td class="h">{{ $estimated ? 'المستهلك هذا الشهر (تقدير)' : 'المستهلك هذا الشهر' }}</td><td class="h">{{ $estimated ? 'الرصيد المرحّل (تقدير)' : 'الرصيد المرحّل' }}</td><td class="h">واجب الشهر الموالي بعد خصم الرصيد{{ $estimated ? ' (تقدير)' : '' }}</td></tr>
     <tr><td><b>{!! $M($cash) !!}</b></td><td><b>{!! $M($consumed) !!}</b></td><td><b>{!! $M($credit) !!}</b></td><td><b>{!! $M($next_due) !!}</b></td></tr>
   </table>
 

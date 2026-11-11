@@ -7,7 +7,7 @@ use Mpdf\Mpdf;
 /** Registration receipt: one A4 page, black & white, Arabic RTL; top = centre archive copy, bottom = parent payment receipt. */
 class RegistrationReceipt
 {
-    public const PHONE = '0653602238';
+    public const PHONE = '0628509031';
     public const ADDRESS = 'مركز سيكما – جماعة مزوضة';
 
     private static function ar(?string $key): string

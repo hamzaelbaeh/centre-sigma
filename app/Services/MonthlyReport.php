@@ -18,6 +18,18 @@ class MonthlyReport
         return self::MONTHS[$d->month - 1].' '.$d->year;
     }
 
+    /** Months registered at the centre as of the report month (registration month counts as 1), in Arabic. */
+    public static function seniority(?Carbon $reg, string $periode): string
+    {
+        if (!$reg) return '—';
+        $rep = Carbon::createFromFormat('Y-m-d', $periode.'-01');
+        $n = ($rep->year * 12 + $rep->month) - ($reg->year * 12 + $reg->month) + 1;
+        if ($n < 1) return '—';
+        if ($n === 1) return 'شهر واحد';
+        if ($n === 2) return 'شهران';
+        return $n.($n <= 10 ? ' أشهر' : ' شهراً');
+    }
+
     public static function data(string $periode): array
     {
         SessionBilling::finalizeEstimates();
@@ -33,7 +45,7 @@ class MonthlyReport
                       ->whereHas('subjects'));
             })->get();
 
-        $rows = $students->map(function (Student $s) use ($invoices, $start, $end) {
+        $rows = $students->map(function (Student $s) use ($invoices, $start, $end, $periode) {
             $inv = $invoices->get($s->id);
             $due = $inv ? (float) $inv->sum('montant') : 0.0;
             $paye = $inv ? (float) $inv->sum('paye') : 0.0;
@@ -46,7 +58,11 @@ class MonthlyReport
             elseif ($paye > 0) { $status = 'جزئي'."\n".'المتبقي '.RegistrationReceipt::money($due - $paye); }
             else { $status = 'غير مؤدّى'; }
             $parent = $s->parents->first();
+            $niv = $s->niveau_scolaire ?: $s->schoolClass?->niveau;
             return [
+                'level' => $niv ? (string) __($niv, [], 'ar') : '—',
+                'seniority' => self::seniority($s->date_inscription, $periode),
+                'adjusted' => $inv ? $inv->contains(fn ($p) => collect($p->details ?? [])->contains('adjusted', true)) : false,
                 'student' => $s, 'parent' => $parent,
                 'subjects' => $s->subjects->pluck('nom')->implode('، ') ?: '—',
                 'due' => $due, 'cash' => $cash, 'credit_in' => $creditIn, 'credit_out' => $creditOut,
@@ -63,7 +79,7 @@ class MonthlyReport
             'periode' => $periode, 'label' => self::monthLabel($periode), 'groups' => $groups,
             'total_due' => $rows->sum('due'), 'total_cash' => $rows->sum('cash'),
             'count' => $rows->count(), 'parents' => $rows->pluck('parent.id')->filter()->unique()->count(),
-            'logo' => public_path('images/logo-sigma-bw.png'),
+            'logo' => public_path('images/logo-sigma-bw.png'), 'phone' => RegistrationReceipt::PHONE,
             'generated' => now()->format('d/m/Y H:i'),
         ];
     }
@@ -74,7 +90,7 @@ class MonthlyReport
         if (!is_dir($dir)) @mkdir($dir, 0775, true);
         $mpdf = new Mpdf([
             'mode' => 'utf-8', 'format' => 'A4-L', 'orientation' => 'L',
-            'margin_left' => 10, 'margin_right' => 10, 'margin_top' => 10, 'margin_bottom' => 14, 'margin_footer' => 5,
+            'margin_left' => 8, 'margin_right' => 8, 'margin_top' => 9, 'margin_bottom' => 14, 'margin_footer' => 5,
             'tempDir' => $dir, 'default_font' => 'xbriyaz', 'default_font_size' => 10,
             'autoScriptToLang' => false, 'autoLangToFont' => false,
         ]);

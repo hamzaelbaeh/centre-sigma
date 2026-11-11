@@ -131,7 +131,30 @@ class StudentController extends Controller
             ->filter(fn ($p) => $p->statut !== 'Annulé' && (float)$p->paye < (float)$p->montant)
             ->sortByDesc('periode')
             ->values();
-        return view('students.show', compact('student', 'unpaidPayments'));
+        $periode = today()->format('Y-m');
+        $sessionRows = $student->subjects->map(function ($sub) use ($student, $periode) {
+            return ['subject' => $sub] + SessionBilling::countUpTo($student, $sub, $periode, today());
+        });
+        $adjustments = \App\Models\SessionAdjustment::with(['subject', 'user'])->where('student_id', $student->id)->orderByDesc('id')->limit(30)->get();
+        return view('students.show', compact('student', 'unpaidPayments', 'sessionRows', 'adjustments', 'periode'));
+    }
+
+    /** Manual correction of the sessions held this month for one subject (up to today). */
+    public function adjustSessions(Request $request, Student $student)
+    {
+        $data = $request->validate([
+            'subject_id' => 'required|integer',
+            'new_count' => 'required|integer|min:0|max:62',
+            'note' => 'nullable|string|max:500',
+        ]);
+        $subject = $student->subjects()->where('subjects.id', $data['subject_id'])->first();
+        abort_unless($subject, 404);
+        $cur = SessionBilling::countUpTo($student, $subject, today()->format('Y-m'), today());
+        if ((int) $data['new_count'] === $cur['count']) {
+            return back()->with('success', __('Aucun changement : le nombre de séances est déjà :n.', ['n' => $cur['count']]));
+        }
+        SessionBilling::adjustSessions($student, $subject, (int) $data['new_count'], $data['note'] ?? null, \Illuminate\Support\Facades\Auth::id());
+        return back()->with('success', __('Séances corrigées : :old → :new (:subject). La facture du mois est mise à jour.', ['old' => $cur['count'], 'new' => $data['new_count'], 'subject' => $subject->nom]));
     }
 
     public function edit(Student $student)

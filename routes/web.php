@@ -50,6 +50,7 @@ Route::middleware('auth')->group(function () {
     Route::get('students/{student}/receipt', [ReceiptController::class, 'show'])->name('students.receipt');
     Route::get('students/{student}/receipt/download', [ReceiptController::class, 'download'])->name('students.receipt.download');
     Route::resource('students', StudentController::class);
+    Route::post('students/{student}/sessions', [StudentController::class, 'adjustSessions'])->name('students.sessions.adjust');
     Route::post('students/{student}/withdraw', [StudentController::class, 'withdraw'])->name('students.withdraw');
     Route::post('students/{student}/statut', [StudentController::class, 'updateStatut'])->name('students.statut');
     Route::post('students/{student}/payments/cancel', [StudentController::class, 'cancelPayments'])->name('students.payments.cancel');

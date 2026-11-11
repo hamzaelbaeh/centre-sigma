@@ -4,6 +4,7 @@ namespace App\Services;
 use App\Models\Attendance;
 use App\Models\Payment;
 use App\Models\PaymentTransaction;
+use App\Models\SessionAdjustment;
 use App\Models\Student;
 use App\Models\StudentAlert;
 use App\Models\Subject;
@@ -27,7 +28,7 @@ class SessionBilling
      * @param array $subjects [subject_id => monthly prix]
      * @param Carbon|null $from null = full month
      */
-    public static function breakdown(?int $classId, array $subjects, string $periode, ?Carbon $from = null): array
+    public static function breakdown(?int $classId, array $subjects, string $periode, ?Carbon $from = null, ?int $studentId = null): array
     {
         $start = Carbon::createFromFormat('Y-m-d', $periode.'-01')->startOfDay();
         $end = $start->copy()->endOfMonth()->startOfDay();
@@ -41,12 +42,19 @@ class SessionBilling
             $prix = (float) $prix;
             $whole = TimetableSnapshot::held($classId, $sub, $start, $end);
             $part = $from->equalTo($start) ? $whole : TimetableSnapshot::held($classId, $sub, $from, $end);
+            $adj = $studentId ? self::adjustment($studentId, (int) $id, $periode) : null;
+            if ($adj) {
+                // manual correction: corrected count up to the correction date + timetable sessions after it
+                $asOf = $adj->as_of->copy()->startOfDay();
+                $after = $asOf->lt($end) ? TimetableSnapshot::held($classId, $sub, $asOf->copy()->addDay()->max($from), $end)['held'] : 0;
+                $part = ['held' => $adj->new_count + $after, 'source' => 'adjusted'];
+            }
             $unit = $whole['held'] > 0 ? round($prix / $whole['held'], 2) : 0;
             $amount = $part['held'] >= $whole['held'] ? $prix : round($prix / $whole['held'] * $part['held'], 2);
             $lines[] = [
                 'subject_id' => (int) $id, 'subject' => $sub->nom, 'monthly' => $prix,
                 'sessions_month' => $whole['held'], 'sessions' => $part['held'], 'session_price' => $unit,
-                'amount' => $amount, 'source' => $whole['source'] === 'actual' && $part['source'] === 'actual' ? 'actual' : ($whole['source'] === 'estimate' ? 'estimate' : 'mixed'),
+                'amount' => $amount, 'adjusted' => (bool) $adj, 'source' => $adj ? 'adjusted' : ($whole['source'] === 'actual' && $part['source'] === 'actual' ? 'actual' : ($whole['source'] === 'estimate' ? 'estimate' : 'mixed')),
             ];
             $total += $amount; $full += $prix; $sessions += $part['held'];
         }
@@ -90,7 +98,7 @@ class SessionBilling
      */
     public static function createInvoice(Student $student, string $periode, ?Carbon $from = null, float $cash = 0, ?int $yearId = null): ?Payment
     {
-        $b = self::breakdown($student->class_id, self::studentSubjects($student), $periode, $from);
+        $b = self::breakdown($student->class_id, self::studentSubjects($student), $periode, $from, $student->id);
         if ($b['full'] <= 0) return null;
         $start = Carbon::createFromFormat('Y-m-d', $periode.'-01')->startOfDay();
         $estimated = $from !== null && $from->copy()->startOfDay()->gt($start) && $start->copy()->endOfMonth()->gte(today());
@@ -120,20 +128,68 @@ class SessionBilling
         foreach (Payment::where('estimated', true)->where('statut', '!=', 'Annulé')->with('student')->get() as $p) {
             $end = Carbon::createFromFormat('Y-m-d', $p->periode.'-01')->endOfMonth()->startOfDay();
             if (!(($beforePeriode && $p->periode < $beforePeriode) || $end->lt(today()))) continue;
-            $s = $p->student;
-            if (!$s) continue;
-            $from = $s->date_inscription ? Carbon::parse($s->date_inscription) : null;
-            $b = self::breakdown($s->class_id, self::studentSubjects($s), $p->periode, $from);
-            $cash = (float) $p->transactions()->sum('montant');
-            [$paye, $creditOut, $creditIn] = self::split($b['total'], (float) $p->credit_in, $cash);
-            $p->update([
-                'montant' => $b['total'], 'paye' => $paye, 'credit_out' => $creditOut, 'credit_in' => $creditIn,
-                'full_amount' => $b['full'], 'sessions' => $b['sessions'], 'details' => $b['lines'], 'estimated' => false,
-                'statut' => self::statut($paye, $b['total']),
-            ]);
+            if (!$p->student) continue;
+            self::recompute($p, true);
             $n++;
         }
         return $n;
+    }
+
+    /**
+     * Recompute an existing monthly invoice from the (real) timetable and manual corrections, keeping cash and credit.
+     * $final=false keeps it flagged as an estimate (month not closed yet) so it is recomputed again at month end.
+     */
+    public static function recompute(Payment $p, bool $final): void
+    {
+        $s = $p->student;
+        $from = $s->date_inscription ? Carbon::parse($s->date_inscription) : null;
+        $b = self::breakdown($s->class_id, self::studentSubjects($s), $p->periode, $from, $s->id);
+        $cash = (float) $p->transactions()->sum('montant');
+        [$paye, $creditOut, $creditIn] = self::split($b['total'], (float) $p->credit_in, $cash);
+        $p->update([
+            'montant' => $b['total'], 'paye' => $paye, 'credit_out' => $creditOut, 'credit_in' => $creditIn,
+            'full_amount' => $b['full'], 'sessions' => $b['sessions'], 'details' => $b['lines'], 'estimated' => !$final,
+            'statut' => self::statut($paye, $b['total']),
+        ]);
+    }
+
+    /** Latest manual correction for a student+subject+month. */
+    public static function adjustment(int $studentId, int $subjectId, string $periode): ?SessionAdjustment
+    {
+        return SessionAdjustment::where('student_id', $studentId)->where('subject_id', $subjectId)->where('periode', $periode)
+            ->orderByDesc('id')->first();
+    }
+
+    /**
+     * Sessions counted for a student+subject from the start of the month (or registration) up to $date inclusive.
+     * @return array{system:int, count:int, adjusted:bool} system = timetable count, count = effective (with correction)
+     */
+    public static function countUpTo(Student $student, Subject $subject, string $periode, Carbon $date): array
+    {
+        $start = Carbon::createFromFormat('Y-m-d', $periode.'-01')->startOfDay();
+        $date = $date->copy()->startOfDay();
+        $from = $student->date_inscription && $student->date_inscription->gt($start) ? $student->date_inscription->copy()->startOfDay() : $start;
+        $system = $date->lt($from) ? 0 : TimetableSnapshot::held($student->class_id, $subject, $from, $date)['held'];
+        $adj = self::adjustment($student->id, $subject->id, $periode);
+        if (!$adj || $adj->as_of->gt($date)) return ['system' => $system, 'count' => $system, 'adjusted' => false];
+        $asOf = $adj->as_of->copy()->startOfDay();
+        $after = $date->gt($asOf) ? TimetableSnapshot::held($student->class_id, $subject, $asOf->copy()->addDay()->max($from), $date)['held'] : 0;
+        return ['system' => $system, 'count' => $adj->new_count + $after, 'adjusted' => true];
+    }
+
+    /** Save a manual correction for the current month; the month's invoice (if any) is recomputed immediately. */
+    public static function adjustSessions(Student $student, Subject $subject, int $newCount, ?string $note, ?int $userId): ?SessionAdjustment
+    {
+        $periode = today()->format('Y-m');
+        $cur = self::countUpTo($student, $subject, $periode, today());
+        $adj = SessionAdjustment::create([
+            'student_id' => $student->id, 'subject_id' => $subject->id, 'periode' => $periode, 'as_of' => today()->toDateString(),
+            'old_count' => $cur['count'], 'new_count' => $newCount, 'user_id' => $userId, 'note' => $note ?: null,
+        ]);
+        $inv = Payment::where('student_id', $student->id)->where('type', 'Mensualité')->where('periode', $periode)
+            ->where('statut', '!=', 'Annulé')->first();
+        if ($inv) self::recompute($inv, false);
+        return $adj;
     }
 
     /**

@@ -568,5 +568,19 @@
   "Utilisé seulement comme estimation / secours ; la facturation se base sur l'emploi du temps réellement tenu.": "Utilisé seulement comme estimation / secours ; la facturation se base sur l'emploi du temps réellement tenu.",
   "estimation": "estimation",
   "À payer le mois 2 (estimation)": "À payer le mois 2 (estimation)",
-  "Le tarif des séances suit l'emploi du temps réellement tenu : la version de chaque semaine est figée à sa fin ; vos modifications s'appliquent à la semaine en cours et aux suivantes.": "Le tarif des séances suit l'emploi du temps réellement tenu : la version de chaque semaine est figée à sa fin ; vos modifications s'appliquent à la semaine en cours et aux suivantes."
+  "Le tarif des séances suit l'emploi du temps réellement tenu : la version de chaque semaine est figée à sa fin ; vos modifications s'appliquent à la semaine en cours et aux suivantes.": "Le tarif des séances suit l'emploi du temps réellement tenu : la version de chaque semaine est figée à sa fin ; vos modifications s'appliquent à la semaine en cours et aux suivantes.",
+  "Séances du mois — correction manuelle": "Séances du mois — correction manuelle",
+  "Séances comptées du début du mois (ou de l'inscription) jusqu'à aujourd'hui. Corrigez le nombre si le système s'est trompé : la facturation utilise le nombre corrigé jusqu'à aujourd'hui, puis ajoute automatiquement les séances suivantes selon l'emploi du temps.": "Séances comptées du début du mois (ou de l'inscription) jusqu'à aujourd'hui. Corrigez le nombre si le système s'est trompé : la facturation utilise le nombre corrigé jusqu'à aujourd'hui, puis ajoute automatiquement les séances suivantes selon l'emploi du temps.",
+  "Compté par le système": "Compté par le système",
+  "Nombre retenu": "Nombre retenu",
+  "Corriger": "Corriger",
+  "corrigé": "corrigé",
+  "Note (facultatif)": "Note (facultatif)",
+  "Historique des corrections": "Historique des corrections",
+  "Ancien": "Ancien",
+  "Nouveau": "Nouveau",
+  "Par": "Par",
+  "Note": "Note",
+  "Aucun changement : le nombre de séances est déjà :n.": "Aucun changement : le nombre de séances est déjà :n.",
+  "Séances corrigées : :old → :new (:subject). La facture du mois est mise à jour.": "Séances corrigées : :old → :new (:subject). La facture du mois est mise à jour."
 }

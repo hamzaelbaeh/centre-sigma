@@ -568,5 +568,19 @@
   "Utilisé seulement comme estimation / secours ; la facturation se base sur l'emploi du temps réellement tenu.": "يُستعمل كتقدير/احتياط فقط؛ الفوترة تعتمد على جدول الحصص المنجز فعلياً.",
   "estimation": "تقدير",
   "À payer le mois 2 (estimation)": "المطلوب في الشهر الثاني (تقدير)",
-  "Le tarif des séances suit l'emploi du temps réellement tenu : la version de chaque semaine est figée à sa fin ; vos modifications s'appliquent à la semaine en cours et aux suivantes.": "تسعيرة الحصة تتبع جدول الحصص المنجز فعلياً: نسخة كل أسبوع تُجمَّد عند نهايته؛ وتعديلاتكم تسري على الأسبوع الحالي وما بعده."
+  "Le tarif des séances suit l'emploi du temps réellement tenu : la version de chaque semaine est figée à sa fin ; vos modifications s'appliquent à la semaine en cours et aux suivantes.": "تسعيرة الحصة تتبع جدول الحصص المنجز فعلياً: نسخة كل أسبوع تُجمَّد عند نهايته؛ وتعديلاتكم تسري على الأسبوع الحالي وما بعده.",
+  "Séances du mois — correction manuelle": "حصص الشهر — تصحيح يدوي",
+  "Séances comptées du début du mois (ou de l'inscription) jusqu'à aujourd'hui. Corrigez le nombre si le système s'est trompé : la facturation utilise le nombre corrigé jusqu'à aujourd'hui, puis ajoute automatiquement les séances suivantes selon l'emploi du temps.": "الحصص محسوبة من بداية الشهر (أو من التسجيل) إلى اليوم. صحّح العدد إذا أخطأ النظام: الفوترة تعتمد العدد المصحَّح إلى اليوم، ثم تضيف الحصص اللاحقة تلقائياً حسب جدول الحصص.",
+  "Compté par le système": "المحسوب بالنظام",
+  "Nombre retenu": "العدد المعتمد",
+  "Corriger": "تصحيح",
+  "corrigé": "مصحَّح",
+  "Note (facultatif)": "ملاحظة (اختياري)",
+  "Historique des corrections": "سجل التصحيحات",
+  "Ancien": "القديم",
+  "Nouveau": "الجديد",
+  "Par": "بواسطة",
+  "Note": "ملاحظة",
+  "Aucun changement : le nombre de séances est déjà :n.": "لا تغيير: عدد الحصص هو :n أصلاً.",
+  "Séances corrigées : :old → :new (:subject). La facture du mois est mise à jour.": "تم تصحيح الحصص: :old ← :new (:subject). تم تحديث فاتورة الشهر."
 }

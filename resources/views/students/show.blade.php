@@ -78,6 +78,38 @@
 </div>
 
 <div class="card" style="margin-top:14px">
+ <h3>{{ __('Séances du mois — correction manuelle') }} ({{ \App\Services\MonthlyReport::monthLabel($periode) }})</h3>
+ <p class="muted" style="margin-bottom:10px">{{ __('Séances comptées du début du mois (ou de l\'inscription) jusqu\'à aujourd\'hui. Corrigez le nombre si le système s\'est trompé : la facturation utilise le nombre corrigé jusqu\'à aujourd\'hui, puis ajoute automatiquement les séances suivantes selon l\'emploi du temps.') }}</p>
+ <table class="data"><thead><tr><th>{{ __('Matière') }}</th><th>{{ __('Compté par le système') }}</th><th>{{ __('Nombre retenu') }}</th><th>{{ __('Corriger') }}</th></tr></thead><tbody>
+ @forelse($sessionRows as $r)
+ <tr>
+  <td>{{ $r['subject']->nom }}</td>
+  <td class="ltr-num">{{ $r['system'] }}</td>
+  <td class="ltr-num"><strong>{{ $r['count'] }}</strong> @if($r['adjusted'])<span class="badge badge-amber">{{ __('corrigé') }}</span>@endif</td>
+  <td>
+   <form method="POST" action="{{ route('students.sessions.adjust', $student) }}" style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">@csrf
+    <input type="hidden" name="subject_id" value="{{ $r['subject']->id }}">
+    <input class="form-input" style="width:80px" type="number" min="0" max="62" name="new_count" value="{{ $r['count'] }}" required>
+    <input class="form-input" style="width:220px" name="note" maxlength="500" placeholder="{{ __('Note (facultatif)') }}">
+    <button class="btn btn-outline" type="submit">{{ __('Enregistrer') }}</button>
+   </form>
+  </td>
+ </tr>
+ @empty
+ <tr><td colspan="4" class="muted">{{ __('Aucune matière') }}</td></tr>
+ @endforelse
+ </tbody></table>
+ @if($adjustments->count())
+ <h3 style="margin-top:14px">{{ __('Historique des corrections') }}</h3>
+ <table class="data"><thead><tr><th>{{ __('Date') }}</th><th>{{ __('Matière') }}</th><th>{{ __('Ancien') }}</th><th>{{ __('Nouveau') }}</th><th>{{ __('Par') }}</th><th>{{ __('Note') }}</th></tr></thead><tbody>
+ @foreach($adjustments as $a)
+ <tr><td class="ltr-num">{{ $a->created_at->format('d/m/Y H:i') }}</td><td>{{ $a->subject?->nom }}</td><td class="ltr-num">{{ $a->old_count }}</td><td class="ltr-num">{{ $a->new_count }}</td><td>{{ $a->user?->name ?? '—' }}</td><td>{{ $a->note ?: '—' }}</td></tr>
+ @endforeach
+ </tbody></table>
+ @endif
+</div>
+
+<div class="card" style="margin-top:14px">
  <h3>{{ __('Factures non payées') }}</h3>
  <p class="muted" style="margin-bottom:10px">{{ __('Annuler une ou plusieurs factures (restant > 0). Les factures annulées n’apparaissent plus comme dues.') }}</p>
  @if($unpaidPayments->isEmpty())
