@@ -4,7 +4,7 @@
 <div class="page-head">
   <div>
     <h1>{{ __('Import élèves') }}</h1>
-    <div class="sub">{{ __('CSV : nom, prenom, date_naissance, sexe, telephone, email, adresse, classe, statut, code_massar') }}</div>
+    <div class="sub">{{ __('CSV : nom, prenom, date_naissance, sexe, telephone, email, adresse, classe, statut, code_massar, niveau_scolaire, parent_nom, parent_prenom, parent_telephone') }}</div>
   </div>
   <div class="actions">
     <a class="btn btn-ghost" href="{{ route('students.index') }}">{{ __('Retour à la liste') }}</a>

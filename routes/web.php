@@ -12,6 +12,7 @@ use App\Http\Controllers\LocaleController;
 use App\Http\Controllers\FeeController;
 use App\Http\Controllers\ParentController;
 use App\Http\Controllers\PaymentController;
+use App\Http\Controllers\ReceiptController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\SettingController;
 use App\Http\Controllers\StaffController;
@@ -44,11 +45,14 @@ Route::middleware('auth')->group(function () {
     Route::get('payments/export', [ExportController::class, 'payments'])->name('payments.export');
     Route::get('reports/export', [ExportController::class, 'reports'])->name('reports.export');
 
-    Route::get('students/billing-preview', [StudentController::class, 'billingPreview'])->name('students.billing_preview');
+    Route::get('students/{student}/receipt', [ReceiptController::class, 'show'])->name('students.receipt');
+    Route::get('students/{student}/receipt/download', [ReceiptController::class, 'download'])->name('students.receipt.download');
     Route::resource('students', StudentController::class);
     Route::post('students/{student}/withdraw', [StudentController::class, 'withdraw'])->name('students.withdraw');
     Route::post('students/{student}/statut', [StudentController::class, 'updateStatut'])->name('students.statut');
     Route::post('students/{student}/payments/cancel', [StudentController::class, 'cancelPayments'])->name('students.payments.cancel');
+    Route::get('parents/search', [ParentController::class, 'search'])->name('parents.search');
+    Route::get('parents/{parent}/children', [ParentController::class, 'children'])->name('parents.children');
     Route::resource('parents', ParentController::class)->except(['show']);
     Route::resource('classes', ClassController::class);
     Route::post('classes/{class}/students', [ClassController::class, 'syncStudents'])->name('classes.students.sync');

@@ -3,8 +3,17 @@
 @section('content')
 <div class="page-head">
  <div><h1>{{ __('Fiche —') }} {{ $student->full_name }}</h1><div class="sub">{{ $student->matricule }} · {{ __($student->statut) }}</div></div>
- <div class="actions"><a class="btn btn-ghost" href="{{ route('students.edit',$student) }}">{{ __('Modifier') }}</a><a class="btn btn-ghost" href="{{ route('students.index') }}">{{ __('Retour') }}</a></div>
+ <div class="actions"><a class="btn btn-ghost" href="{{ route('students.receipt',$student) }}" target="_blank" rel="noopener">{{ __('Imprimer le reçu (PDF)') }}</a><a class="btn btn-ghost" href="{{ route('students.receipt.download',$student) }}">{{ __('Télécharger le reçu') }}</a><a class="btn btn-ghost" href="{{ route('students.edit',$student) }}">{{ __('Modifier') }}</a><a class="btn btn-ghost" href="{{ route('students.index') }}">{{ __('Retour') }}</a></div>
 </div>
+@if(session('receipt_new'))
+<div class="card" style="margin-bottom:14px;border:2px solid #16a34a">
+ <strong>{{ __('Le reçu d\'inscription (PDF, A4) est prêt.') }}</strong>
+ <div class="actions" style="margin-top:10px;justify-content:flex-start">
+  <a class="btn btn-gold" href="{{ route('students.receipt',$student) }}" target="_blank" rel="noopener">{{ __('Imprimer (ouvrir le PDF)') }}</a>
+  <a class="btn btn-outline" href="{{ route('students.receipt.download',$student) }}">{{ __('Télécharger le PDF') }}</a>
+ </div>
+</div>
+@endif
 <div class="grid grid-2">
 <div class="card">
  <p><strong>{{ __('Niveau scolaire:') }}</strong> {{ $student->niveau_scolaire ? __($student->niveau_scolaire) : '—' }}</p>
@@ -50,7 +59,7 @@
  <p style="margin-top:8px"><strong>{{ __('Total mensuel estimé') }} :</strong> {{ number_format($student->monthlyFeeAmount(), 2, ',', ' ') }} DH</p>
 
  <h3>{{ __('Parents / Tuteurs') }}</h3>
- <ul>@forelse($student->parents as $p)<li>{{ $p->full_name }} — {{ $p->telephone }}</li>@empty<li class="muted">{{ __('Aucun') }}</li>@endforelse</ul>
+ <ul>@forelse($student->parents as $p)<li><strong class="ltr-num">{{ $p->numero_pad }}-<a href="#" class="js-children" data-url="{{ route('parents.children',$p) }}" title="{{ __('Voir la liste des élèves') }}">{{ $p->children_count }}</a></strong> · {{ $p->full_name }} — {{ $p->telephone }}</li>@empty<li class="muted">{{ __('Aucun') }}</li>@endforelse</ul>
  <h3>{{ __('Paiements') }}</h3>
  <table class="data"><thead><tr><th>{{ __('TYPE') }}</th><th>{{ __('PÉRIODE') }}</th><th>{{ __('MONTANT') }}</th><th>{{ __('PAYÉ') }}</th><th>{{ __('STATUT') }}</th></tr></thead><tbody>
  @forelse($student->payments as $pay)
@@ -110,6 +119,7 @@
  </form>
  @endif
 </div>
+@include('parents.partials.children-modal')
 @endsection
 @push('scripts')
 <script>

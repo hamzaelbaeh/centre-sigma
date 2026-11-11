@@ -23,7 +23,7 @@ class PaymentController extends Controller
 
         $today = PaymentTransaction::whereDate('date', today())->sum('montant');
         $month = PaymentTransaction::whereBetween('date', [now()->startOfMonth()->toDateString(), now()->endOfMonth()->toDateString()])->sum('montant');
-        $total = Payment::sum('paye');
+        $total = PaymentTransaction::sum('montant');
         $remaining = Payment::notCancelled()->selectRaw('SUM(montant - paye) as r')->value('r') ?? 0;
 
         return view('payments.index', compact('payments','periode','today','month','total','remaining'));
@@ -69,7 +69,7 @@ class PaymentController extends Controller
                 ->where('statut', '!=', 'Annulé')
                 ->exists();
             if ($exists) continue;
-            // Later months = full month sessions of the class schedule.
+            // Later months = full month (sessions per week x 4); any credit from registration is deducted.
             if (\App\Services\SessionBilling::createInvoice($student, $periode, null, 0, $year?->id)) $created++;
         }
         return back()->with('success', __(':n mensualité(s) générée(s).', ['n' => $created]));

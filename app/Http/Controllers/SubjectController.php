@@ -31,13 +31,14 @@ class SubjectController extends Controller
             'niveau' => 'nullable|string',
             'heures_semaine' => 'nullable|numeric',
             'prix' => 'nullable|numeric|min:0',
-            'sessions_per_month' => 'nullable|integer|min:1|max:60',
+            'sessions_per_week' => 'nullable|integer|min:1|max:14',
             'classes' => 'nullable|array',
             'teachers' => 'nullable|array',
         ]);
         $classes = $data['classes'] ?? [];
         $teachers = $data['teachers'] ?? [];
         unset($data['classes'], $data['teachers']);
+        $data['sessions_per_week'] = $data['sessions_per_week'] ?? 2;
         $subject = Subject::create($data);
         $subject->classes()->sync($classes);
         $subject->teachers()->sync($teachers);
@@ -60,13 +61,14 @@ class SubjectController extends Controller
             'niveau' => 'nullable|string',
             'heures_semaine' => 'nullable|numeric',
             'prix' => 'nullable|numeric|min:0',
-            'sessions_per_month' => 'nullable|integer|min:1|max:60',
+            'sessions_per_week' => 'nullable|integer|min:1|max:14',
             'classes' => 'nullable|array',
             'teachers' => 'nullable|array',
         ]);
         $classes = $data['classes'] ?? [];
         $teachers = $data['teachers'] ?? [];
         unset($data['classes'], $data['teachers']);
+        $data['sessions_per_week'] = $data['sessions_per_week'] ?? 2;
         $subject->update($data);
         $subject->classes()->sync($classes);
         $subject->teachers()->sync($teachers);

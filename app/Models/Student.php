@@ -42,6 +42,13 @@ class Student extends Model
             ->withPivot('prix')
             ->withTimestamps();
     }
+    /** The registration invoice (first monthly invoice carrying the full-month/credit data, else the first one). */
+    public function registrationPayment(): ?Payment
+    {
+        $q = Payment::where('student_id', $this->id)->where('type', 'Mensualité')->where('statut', '!=', 'Annulé');
+        return (clone $q)->whereNotNull('full_amount')->orderBy('periode')->orderBy('id')->first()
+            ?? $q->orderBy('periode')->orderBy('id')->first();
+    }
     public function payments(): HasMany { return $this->hasMany(Payment::class); }
     public function attendances(): HasMany { return $this->hasMany(Attendance::class); }
     public function alerts(): HasMany { return $this->hasMany(StudentAlert::class); }

@@ -7,76 +7,46 @@ use App\Models\PaymentTransaction;
 use App\Models\Student;
 use App\Models\StudentAlert;
 use App\Models\Subject;
-use App\Models\TimetableSlot;
 use Carbon\Carbon;
 
 /**
- * Session-based billing.
- * Sessions of a subject in a month = number of dates in that month whose weekday
- * matches a timetable slot (class + subject). Fallback: subjects.sessions_per_month, else 4.
- * session_price = monthly fee (student_subject.prix) / full-month sessions.
+ * Session-based billing, independent of the timetable.
+ * Sessions per month of a subject = subjects.sessions_per_week (default 2) x 4.
+ * session_price = monthly fee (student_subject.prix) / sessions per month.
+ * Registration month: the parent pays the FULL month; consumed = remaining sessions x session price;
+ * the difference is a credit (advance) deducted from the next invoice.
+ * Income stats use payments.paye per period = amount earned for that month (credit applied counts in the month it is used).
  */
 class SessionBilling
 {
     public const SUSPENDED = 'Suspendu temporairement';
     public const WITHDRAWN = 'Retiré';
-    public const DAYS = ['lundi'=>1,'mardi'=>2,'mercredi'=>3,'jeudi'=>4,'vendredi'=>5,'samedi'=>6,'dimanche'=>7];
-
-    /** @return int[] ISO weekdays (one entry per weekly slot) */
-    public static function weekdays(?int $classId, int $subjectId): array
-    {
-        if (!$classId) return [];
-        return TimetableSlot::where('class_id', $classId)->where('subject_id', $subjectId)->pluck('jour')
-            ->map(fn ($j) => self::DAYS[mb_strtolower(trim((string) $j))] ?? null)->filter()->values()->all();
-    }
-
-    public static function countSessions(array $weekdays, Carbon $from, Carbon $to): int
-    {
-        $n = 0;
-        for ($d = $from->copy()->startOfDay(); $d->lte($to); $d->addDay()) {
-            foreach ($weekdays as $w) if ($d->dayOfWeekIso === $w) $n++;
-        }
-        return $n;
-    }
 
     /**
-     * @param array $subjects [subject_id => prix]
-     * @param Carbon|null $from null = full month
+     * @param array $subjects [subject_id => monthly prix]
+     * @param array|null $remaining [subject_id => remaining sessions this month] (null = full month)
      */
-    public static function breakdown(?int $classId, array $subjects, string $periode, ?Carbon $from = null): array
+    public static function breakdown(array $subjects, string $periode, ?array $remaining = null): array
     {
-        $start = Carbon::createFromFormat('Y-m-d', $periode.'-01')->startOfDay();
-        $end = $start->copy()->endOfMonth();
-        $from = $from && $from->gt($start) ? $from->copy()->startOfDay() : $start;
         $models = Subject::whereIn('id', array_keys($subjects))->get()->keyBy('id');
         $lines = [];
-        $total = 0.0; $sessions = 0;
+        $total = 0.0; $full = 0.0; $sessions = 0;
         foreach ($subjects as $id => $prix) {
             $sub = $models[$id] ?? null;
             if (!$sub) continue;
             $prix = (float) $prix;
-            $days = self::weekdays($classId, (int) $id);
-            if ($days) {
-                $full = self::countSessions($days, $start, $end);
-                $remaining = self::countSessions($days, $from, $end);
-                $source = 'schedule';
-            } else {
-                $full = (int) ($sub->sessions_per_month ?: 4);
-                $daysInMonth = $start->daysInMonth;
-                $remaining = $from->equalTo($start) ? $full
-                    : (int) round($full * ($daysInMonth - $from->day + 1) / $daysInMonth);
-                $source = 'default';
-            }
-            $unit = $full > 0 ? round($prix / $full, 2) : 0;
-            $amount = $remaining >= $full ? $prix : round($unit * $remaining, 2);
+            $spm = $sub->sessions_per_month;
+            $rem = isset($remaining[$id]) && $remaining[$id] !== '' ? (int) $remaining[$id] : $spm;
+            $rem = max(0, min($rem, $spm));
+            $unit = round($prix / $spm, 2);
+            $amount = $rem >= $spm ? $prix : round($prix / $spm * $rem, 2);
             $lines[] = [
                 'subject_id' => (int) $id, 'subject' => $sub->nom, 'monthly' => $prix,
-                'sessions_month' => $full, 'sessions' => $remaining, 'session_price' => $unit,
-                'amount' => $amount, 'source' => $source,
+                'sessions_month' => $spm, 'sessions' => $rem, 'session_price' => $unit, 'amount' => $amount,
             ];
-            $total += $amount; $sessions += $remaining;
+            $total += $amount; $full += $prix; $sessions += $rem;
         }
-        return ['lines' => $lines, 'total' => round($total, 2), 'sessions' => $sessions, 'periode' => $periode];
+        return ['lines' => $lines, 'total' => round($total, 2), 'full' => round($full, 2), 'sessions' => $sessions, 'periode' => $periode];
     }
 
     public static function studentSubjects(Student $student): array
@@ -90,19 +60,35 @@ class SessionBilling
         return $out;
     }
 
-    public static function createInvoice(Student $student, string $periode, ?Carbon $from = null, float $paye = 0, ?int $yearId = null): ?Payment
+    /** Credit (advance) the student still has available to deduct from a new invoice. */
+    public static function availableCredit(Student $student): float
     {
-        $b = self::breakdown($student->class_id, self::studentSubjects($student), $periode, $from);
-        if ($b['total'] <= 0) return null;
-        $paye = min(max(0, $paye), $b['total']);
+        $p = Payment::where('student_id', $student->id)->where('statut', '!=', 'Annulé');
+        return max(0, round((float) (clone $p)->sum('credit_out') - (float) $p->sum('credit_in'), 2));
+    }
+
+    /**
+     * @param array|null $remaining [subject_id => remaining sessions] for the registration month, null = full month
+     * @param float $cash cash received now (registration: the full month)
+     */
+    public static function createInvoice(Student $student, string $periode, ?array $remaining = null, float $cash = 0, ?int $yearId = null): ?Payment
+    {
+        $b = self::breakdown(self::studentSubjects($student), $periode, $remaining);
+        if ($b['full'] <= 0) return null;
+        $consumed = $b['total'];
+        $cash = min(max(0, $cash), $b['full']);
+        $creditIn = min(self::availableCredit($student), $consumed);
+        $paye = min($cash, max(0, $consumed - $creditIn)) + $creditIn;
+        $creditOut = max(0, round($cash - max(0, $consumed - $creditIn), 2));
         $payment = Payment::create([
-            'student_id' => $student->id, 'type' => 'Mensualité', 'montant' => $b['total'], 'paye' => $paye,
+            'student_id' => $student->id, 'type' => 'Mensualité', 'montant' => $consumed, 'paye' => $paye,
+            'full_amount' => $b['full'], 'credit_in' => $creditIn, 'credit_out' => $creditOut,
             'periode' => $periode, 'sessions' => $b['sessions'], 'details' => $b['lines'],
-            'statut' => $paye <= 0 ? 'Non payé' : ($paye >= $b['total'] ? 'Soldé' : 'Partiel'),
+            'statut' => $paye <= 0 && $consumed > 0 ? 'Non payé' : ($paye >= $consumed ? 'Soldé' : 'Partiel'),
             'school_year_id' => $yearId ?? $student->school_year_id,
         ]);
-        if ($paye > 0) {
-            PaymentTransaction::create(['payment_id' => $payment->id, 'date' => now()->toDateString(), 'montant' => $paye, 'mode' => 'Espèces']);
+        if ($cash > 0) {
+            PaymentTransaction::create(['payment_id' => $payment->id, 'date' => now()->toDateString(), 'montant' => $cash, 'mode' => 'Espèces']);
         }
         return $payment;
     }

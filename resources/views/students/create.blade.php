@@ -3,6 +3,7 @@
 @section('content')
 @php
     $student = $student ?? null;
+    $oldParent = old('parent_id') ? \App\Models\ParentGuardian::find(old('parent_id')) : null;
 @endphp
 <div class="page-head"><div><h1>{{ __('Nouvel élève') }}</h1></div><a class="btn btn-ghost" href="{{ route('students.index') }}">{{ __('Retour') }}</a></div>
 <form class="card" method="POST" action="{{ route('students.store') }}" enctype="multipart/form-data" id="student-create-form">@csrf
@@ -40,33 +41,86 @@
   <label>{{ __('Classe') }} <span class="muted">({{ __('optionnel') }})</span></label>
   <select class="form-select" style="width:100%" name="class_id"><option value="">—</option>@foreach($classes as $c)<option value="{{ $c->id }}" @selected(old('class_id', $student->class_id ?? '')==$c->id)>{{ $c->nom }}</option>@endforeach</select>
   <div class="sub">{{ __('يتم توزيع التلاميذ على الأقسام يدوياً من صفحة الأقسام') }}</div>
-  @unless(isset($student))
-  <div id="billing-preview" class="sub" style="margin-top:8px;padding:8px 10px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;display:none"></div>
-  @endunless
 </div>
 <div class="form-row">
  <div class="form-group"><label>{{ __('Statut') }}</label><select class="form-select" style="width:100%" name="statut">@foreach(['Actif','Suspendu temporairement','Retiré','Suspendu','Transféré','Abandonné','Diplômé','Exclu'] as $s)<option value="{{ $s }}" @selected(old('statut', $student->statut ?? 'Actif')==$s)>{{ __($s) }}</option>@endforeach</select></div>
  <div class="form-group"><label>{{ __('Code Massar') }}</label><input class="form-input" style="width:100%" name="code_massar" value="{{ old('code_massar', $student->code_massar ?? '') }}"></div>
 </div>
 <div class="form-group"><label>{{ __('Photo') }}</label><input class="form-input" style="width:100%" type="file" name="photo" accept="image/*"></div>
-<div class="form-group"><label>{{ __('Parent / Tuteur') }}</label><div class="checkboxes">@foreach($parents as $p)<label><input type="checkbox" name="parents[]" value="{{ $p->id }}" @checked(collect(old('parents', isset($student)?$student->parents->pluck('id')->all():[]))->contains($p->id))> {{ $p->full_name }}</label>@endforeach</div></div>
+<div class="form-group" id="parent-field">
+  <label>{{ __('Parent / Tuteur') }}</label>
+  <input type="hidden" name="parent_id" id="parent_id" value="{{ old('parent_id') }}">
+  <div id="parent-picked" style="display:none;align-items:center;gap:10px;padding:8px 10px;border:1px solid #16a34a;background:#f0fdf4;border-radius:8px">
+    <span id="parent-picked-label" style="font-weight:600"></span>
+    <button type="button" class="btn btn-sm btn-ghost" id="parent-clear">{{ __('Changer') }}</button>
+  </div>
+  <div id="parent-search-box" style="position:relative">
+    <input class="form-input" style="width:100%" type="text" id="parent_search" autocomplete="off" placeholder="{{ __('Rechercher un parent par téléphone ou nom...') }}">
+    <div id="parent-results" style="display:none;position:absolute;z-index:50;inset-inline:0;background:#fff;border:1px solid #cbd5e1;border-radius:8px;max-height:220px;overflow:auto;box-shadow:0 6px 18px rgba(0,0,0,.12)"></div>
+    <div class="sub" id="parent-hint">{{ __('Si le parent est introuvable, remplissez les champs ci-dessous : il sera créé et lié automatiquement.') }}</div>
+  </div>
+  <div id="new-parent-box" style="margin-top:10px;padding:10px;border:1px dashed #cbd5e1;border-radius:8px">
+    <div class="sub" style="margin-bottom:6px"><strong>{{ __('Nouveau parent') }}</strong></div>
+    <div class="form-row">
+      <div class="form-group"><label>{{ __('Nom') }}</label><input class="form-input" style="width:100%" name="new_parent[nom]" value="{{ old('new_parent.nom') }}"></div>
+      <div class="form-group"><label>{{ __('Prénom') }}</label><input class="form-input" style="width:100%" name="new_parent[prenom]" value="{{ old('new_parent.prenom') }}"></div>
+      <div class="form-group"><label>{{ __('Téléphone') }}</label><input class="form-input" style="width:100%" name="new_parent[telephone]" value="{{ old('new_parent.telephone') }}"></div>
+    </div>
+  </div>
+</div>
+<script>
+(function(){
+  const hid = document.getElementById('parent_id'), inp = document.getElementById('parent_search'), res = document.getElementById('parent-results');
+  const picked = document.getElementById('parent-picked'), lbl = document.getElementById('parent-picked-label');
+  const searchBox = document.getElementById('parent-search-box'), newBox = document.getElementById('new-parent-box');
+  const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  let t;
+  function pick(p){
+    hid.value = p.id;
+    lbl.innerHTML = '<span dir="ltr">' + esc(p.display_id) + '</span> — ' + esc(p.nom) + ' — <span dir="ltr">' + esc(p.telephone || '') + '</span>';
+    picked.style.display = 'flex'; searchBox.style.display = 'none'; newBox.style.display = 'none'; res.style.display = 'none';
+    newBox.querySelectorAll('input').forEach(i => i.value = '');
+  }
+  document.getElementById('parent-clear').addEventListener('click', () => {
+    hid.value = ''; picked.style.display = 'none'; searchBox.style.display = 'block'; newBox.style.display = 'block'; inp.value = ''; inp.focus();
+  });
+  inp.addEventListener('input', () => {
+    clearTimeout(t);
+    const q = inp.value.trim();
+    if (q.length < 2) { res.style.display = 'none'; return; }
+    t = setTimeout(() => {
+      fetch('{{ route('parents.search') }}?q=' + encodeURIComponent(q), {headers:{'Accept':'application/json'}}).then(r => r.json()).then(list => {
+        if (!list.length) { res.innerHTML = '<div style="padding:8px 10px" class="muted">{{ __('Aucun parent trouvé — remplissez les champs « Nouveau parent ».') }}</div>'; res.style.display = 'block'; return; }
+        res.innerHTML = list.map((p, i) => '<div class="parent-opt" data-i="' + i + '" style="padding:8px 10px;cursor:pointer;border-bottom:1px solid #f1f5f9"><strong dir="ltr">' + esc(p.display_id) + '</strong> — ' + esc(p.nom) + ' — <span dir="ltr">' + esc(p.telephone || '') + '</span></div>').join('');
+        res.style.display = 'block';
+        res.querySelectorAll('.parent-opt').forEach(el => el.addEventListener('click', () => pick(list[+el.dataset.i])));
+      });
+    }, 250);
+  });
+  document.addEventListener('click', e => { if (!e.target.closest('#parent-search-box')) res.style.display = 'none'; });
+  @if($oldParent)
+  pick({!! json_encode(['id'=>$oldParent->id,'display_id'=>$oldParent->display_id,'nom'=>$oldParent->full_name,'telephone'=>$oldParent->telephone], JSON_UNESCAPED_UNICODE) !!});
+  @endif
+})();
+</script>
 
 @include('students.partials.subjects')
 
 <div class="form-group" id="initial-payment-section" style="margin-top:16px;padding-top:12px;border-top:1px solid #eee">
   <label>{{ __('Paiement initial (mensualité)') }}</label>
-  <div class="sub" style="margin-bottom:8px">{{ __('Le montant de la mensualité est la somme des prix facturés des matières cochées. Indiquez si l\'élève a déjà payé.') }}</div>
+  <div class="sub" style="margin-bottom:8px">{{ __('Le parent paie le mois COMPLET à l\'inscription. Le montant consommé ce mois = séances restantes × prix de la séance ; la différence est un crédit déduit du mois suivant.') }}</div>
+  <div id="billing-preview" class="sub" style="margin-bottom:10px;padding:8px 10px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;display:none"></div>
   <div class="form-row">
     <div class="form-group">
       <label>{{ __('Statut du paiement') }}</label>
       <select class="form-select" style="width:100%" name="payment_statut" id="payment_statut">
-        <option value="Non payé" @selected(old('payment_statut','Non payé')==='Non payé')>{{ __('Non payé') }}</option>
+        <option value="Non payé" @selected(old('payment_statut','Soldé')==='Non payé')>{{ __('Non payé') }}</option>
         <option value="Partiel" @selected(old('payment_statut')==='Partiel')>{{ __('Partiel') }}</option>
-        <option value="Soldé" @selected(old('payment_statut')==='Soldé')>{{ __('Soldé') }}</option>
+        <option value="Soldé" @selected(old('payment_statut','Soldé')==='Soldé')>{{ __('Soldé') }}</option>
       </select>
     </div>
     <div class="form-group" id="payment-paye-group">
-      <label>{{ __('Montant payé (DH)') }}</label>
+      <label>{{ __('Montant payé (DH)') }} <span class="muted">({{ __('mois complet') }})</span></label>
       <input class="form-input" style="width:100%" type="number" step="0.01" min="0" name="payment_paye" id="payment_paye" value="{{ old('payment_paye') }}">
       <div class="sub">{{ __('Total mensuel estimé') }} : <span id="payment-total-hint">0,00</span> DH</div>
     </div>
@@ -106,42 +160,30 @@
 @unless(isset($student))
 <script>
 (function(){
-  const cls = document.querySelector('select[name=class_id]');
   const box = document.getElementById('billing-preview');
-  if (!cls || !box) return;
-  const dateInp = document.querySelector('input[name=date_inscription]');
-  function f(n){ return Number(n).toFixed(2) + ' DH'; }
-  let t;
-  function load(){
-    const p = new URLSearchParams();
-    if (cls.value) p.append('class_id', cls.value);
-    if (dateInp && dateInp.value) p.append('date', dateInp.value);
-    let any = false;
-    document.querySelectorAll('.subject-enroll-row').forEach(r => {
-      const c = r.querySelector('.subject-check'), i = r.querySelector('.subject-prix');
-      if (c && c.checked) { any = true; p.append('subjects['+c.value+']', i.value || 0); }
-    });
-    if (!cls.value) { box.style.display='none'; return; }
-    if (!any) { box.style.display='block'; box.innerHTML = 'اختار المواد باش يبان عدد الحصص المتبقية والمبلغ.'; return; }
-    fetch('{{ route('students.billing_preview') }}?' + p.toString(), {headers:{'Accept':'application/json'}})
-      .then(r => r.json()).then(d => {
-        let h = '<strong>الحصص المتبقية فهاد الشهر: ' + d.sessions + ' — المبلغ الواجب أداؤه: ' + f(d.total) + '</strong><br>';
-        d.lines.forEach(l => {
-          h += l.subject + ': ' + l.sessions + ' / ' + l.sessions_month + ' حصة × ' + f(l.session_price) + ' = ' + f(l.amount)
-             + (l.source === 'default' ? ' <span style="color:#b45309">(ما كاينش جدول لهاد المادة فالقسم)</span>' : '') + '<br>';
-        });
-        box.innerHTML = h; box.style.display = 'block';
-        const hint = document.getElementById('payment-total-hint'); if (hint) hint.textContent = Number(d.total).toFixed(2);
-        const st = document.getElementById('payment_statut'), pay = document.getElementById('payment_paye');
-        if (st && pay && st.value === 'Soldé') pay.value = Number(d.total).toFixed(2);
-      });
-  }
-  function q(){ clearTimeout(t); t = setTimeout(load, 250); }
-  cls.addEventListener('change', q);
-  if (dateInp) dateInp.addEventListener('change', q);
   const sec = document.getElementById('student-subjects-section');
-  if (sec) { sec.addEventListener('change', q); sec.addEventListener('input', q); }
-  q();
+  if (!box || !sec) return;
+  const fmt = n => Number(n).toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2, useGrouping:false}) + ' DH';
+  const L = {full:@json(__('Mois complet payé')), consumed:@json(__('Consommé ce mois')), credit:@json(__('Crédit reporté')), next:@json(__('À payer le mois 2')), unit:@json(__('Prix séance')), rem:@json(__('restantes')), pick:@json(__('Cochez des matières pour voir le calcul.'))};
+  function render(){
+    let full = 0, consumed = 0, rows = '';
+    sec.querySelectorAll('.subject-enroll-row').forEach(r => {
+      const c = r.querySelector('.subject-check'), p = r.querySelector('.subject-prix'), m = r.querySelector('.subject-remaining');
+      if (!c || !c.checked) return;
+      const prix = parseFloat(p.value) || 0, spm = parseInt(m.dataset.spm) || 8;
+      let rem = parseInt(m.value); if (isNaN(rem)) rem = spm; rem = Math.max(0, Math.min(rem, spm));
+      const unit = prix / spm, amount = rem >= spm ? prix : unit * rem;
+      full += prix; consumed += amount;
+      rows += '<div>' + c.closest('label').querySelector('span').childNodes[0].textContent.trim() + ': ' + rem + '/' + spm + ' × ' + fmt(unit) + ' = ' + fmt(amount) + '</div>';
+    });
+    if (!rows) { box.innerHTML = L.pick; box.style.display = 'block'; return; }
+    const credit = Math.max(0, full - consumed);
+    box.innerHTML = rows + '<hr style="border:0;border-top:1px solid #e2e8f0;margin:6px 0">'
+      + '<strong>' + L.full + ': ' + fmt(full) + ' · ' + L.consumed + ': ' + fmt(consumed) + ' · ' + L.credit + ': ' + fmt(credit) + ' · ' + L.next + ': ' + fmt(Math.max(0, full - credit)) + '</strong>';
+    box.style.display = 'block';
+  }
+  sec.addEventListener('change', render); sec.addEventListener('input', render);
+  render();
 })();
 </script>
 @endunless

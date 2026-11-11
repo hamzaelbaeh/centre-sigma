@@ -24,10 +24,8 @@ class DashboardController extends Controller
 
         $start = now()->startOfMonth()->toDateString();
         $end = now()->endOfMonth()->toDateString();
+        // Income = amount earned/due for the month (payments.paye per period, credit applied included), not cash received.
         $encaisseMois = Payment::where('periode', $month)->sum('paye');
-        if ($encaisseMois == 0) {
-            $encaisseMois = \App\Models\PaymentTransaction::whereBetween('date', [$start, $end])->sum('montant');
-        }
         $restant = Payment::selectRaw('SUM(montant - paye) as r')->value('r') ?? 0;
         $salairesAPayer = Teacher::where('statut','Actif')->sum('valeur_dh') + Staff::where('statut','Actif')->sum('salaire');
         $depenses = Expense::whereBetween('date', [$start, $end])->sum('montant');
@@ -53,7 +51,7 @@ class DashboardController extends Controller
             $me = $m->copy()->endOfMonth()->toDateString();
             $chartMonths[] = [
                 'label' => $label,
-                'recettes' => (float) \App\Models\PaymentTransaction::whereBetween('date', [$ms, $me])->sum('montant'),
+                'recettes' => (float) Payment::where('periode', $key)->sum('paye'),
                 'depenses' => (float) Expense::whereBetween('date', [$ms, $me])->sum('montant'),
                 'salaires' => (float) TeacherPayroll::where('periode',$key)->where('statut','Payé')->sum('net')
                     + (float) \App\Models\StaffPayroll::where('periode',$key)->where('statut','Payé')->sum('net'),

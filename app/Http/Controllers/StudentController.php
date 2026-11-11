@@ -8,7 +8,10 @@ use App\Models\SchoolClass;
 use App\Models\SchoolYear;
 use App\Models\Student;
 use App\Models\Subject;
+use App\Services\Matricule;
+use App\Services\SessionBilling;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class StudentController extends Controller
 {
@@ -33,9 +36,8 @@ class StudentController extends Controller
     public function create()
     {
         $classes = SchoolClass::orderBy('nom')->get();
-        $parents = ParentGuardian::orderBy('nom')->get();
         $subjects = Subject::orderBy('nom')->get();
-        return view('students.create', compact('classes','parents','subjects'));
+        return view('students.create', compact('classes','subjects'));
     }
 
     public function store(Request $request)
@@ -57,10 +59,13 @@ class StudentController extends Controller
             'code_massar' => 'nullable|string',
             'photo' => 'nullable|image|max:2048',
             'parents' => 'nullable|array',
+            'parent_id' => 'nullable|exists:parents,id',
             'subjects' => 'nullable|array',
             'subjects.*' => 'exists:subjects,id',
             'subject_prix' => 'nullable|array',
             'subject_prix.*' => 'nullable|numeric|min:0',
+            'subject_remaining' => 'nullable|array',
+            'subject_remaining.*' => 'nullable|integer|min:0|max:60',
             'payment_statut' => 'nullable|in:Non payé,Partiel,Soldé',
             'payment_paye' => 'nullable|numeric|min:0',
         ]);
@@ -70,26 +75,56 @@ class StudentController extends Controller
             ]);
             $data['payment_paye'] = $request->input('payment_paye');
         }
+        $np = (array) $request->input('new_parent', []);
+        $wantsNewParent = !$request->filled('parent_id')
+            && (filled($np['nom'] ?? null) || filled($np['telephone'] ?? null) || filled($np['prenom'] ?? null));
+        if ($wantsNewParent) {
+            $request->validate([
+                'new_parent.nom' => 'required|string|max:255',
+                'new_parent.prenom' => 'nullable|string|max:255',
+                'new_parent.telephone' => 'required|string|max:30',
+            ]);
+        }
         $data['statut'] = $data['statut'] ?? 'Actif';
         $data['school_year_id'] = SchoolYear::active()?->id;
-        if (!$request->filled('matricule')) {
-            $data['matricule'] = 'EL'.str_pad((string)(Student::max('id')+1), 5, '0', STR_PAD_LEFT);
-        }
         if ($request->hasFile('photo')) {
             $data['photo'] = $request->file('photo')->store('photos', 'public');
         }
-        $parents = $data['parents'] ?? [];
         $subjectIds = $data['subjects'] ?? [];
         $subjectPrix = $data['subject_prix'] ?? [];
+        $remaining = $data['subject_remaining'] ?? [];
         $paymentStatut = $data['payment_statut'] ?? 'Non payé';
         $paymentPaye = $data['payment_paye'] ?? null;
-        unset($data['parents'], $data['subjects'], $data['subject_prix'], $data['payment_statut'], $data['payment_paye']);
+        $parentIds = $data['parents'] ?? [];
+        unset($data['parents'], $data['parent_id'], $data['subjects'], $data['subject_prix'], $data['subject_remaining'], $data['payment_statut'], $data['payment_paye']);
         $data['date_inscription'] = $data['date_inscription'] ?? now()->toDateString();
-        $student = Student::create($data);
-        $student->parents()->sync($parents);
-        $this->syncStudentSubjects($student, $subjectIds, $subjectPrix);
-        $this->createInitialMensualite($student, $paymentStatut, $paymentPaye);
-        return redirect()->route('students.index')->with('success', __('Élève créé avec succès.'));
+
+        $student = DB::transaction(function () use ($data, $request, $np, $wantsNewParent, $parentIds, $subjectIds, $subjectPrix, $remaining, $paymentStatut, $paymentPaye) {
+            // parent: existing (picked) or matched by phone, else created inline with the next number
+            $parent = null;
+            if ($request->filled('parent_id')) {
+                $parent = ParentGuardian::find($request->input('parent_id'));
+            } elseif ($wantsNewParent) {
+                $parent = Matricule::findParentByPhone($np['telephone'])
+                    ?? ParentGuardian::create([
+                        'nom' => trim($np['nom']), 'prenom' => filled($np['prenom'] ?? null) ? trim($np['prenom']) : null,
+                        'telephone' => trim($np['telephone']),
+                    ]);
+            }
+            if ($parent) $parentIds = [$parent->id];
+
+            $data['matricule'] = Matricule::next($data['niveau_scolaire'] ?? null);
+            $student = Student::create($data);
+            $student->parents()->sync($parentIds);
+            Matricule::refresh($student);
+            $this->syncStudentSubjects($student, $subjectIds, $subjectPrix);
+            $this->createInitialMensualite($student, $paymentStatut, $paymentPaye, $remaining);
+            return $student;
+        });
+
+        return redirect()->route('students.show', $student)
+            ->with('success', __('Élève créé avec succès.'))
+            ->with('receipt_new', true);
     }
 
     public function show(Student $student)
@@ -144,6 +179,7 @@ class StudentController extends Controller
         unset($data['parents'], $data['subjects'], $data['subject_prix']);
         $student->update($data);
         $student->parents()->sync($parents);
+        Matricule::refresh($student->fresh());
         $this->syncStudentSubjects($student, $subjectIds, $subjectPrix);
         return redirect()->route('students.index')->with('success', __('Élève mis à jour.'));
     }
@@ -205,6 +241,7 @@ class StudentController extends Controller
         $headers = [
             'nom', 'prenom', 'date_naissance', 'sexe', 'telephone', 'email',
             'adresse', 'classe', 'statut', 'code_massar',
+            'niveau_scolaire', 'parent_nom', 'parent_prenom', 'parent_telephone',
         ];
         return response()->streamDownload(function () use ($headers) {
             $out = fopen('php://output', 'w');
@@ -213,6 +250,7 @@ class StudentController extends Controller
             fputcsv($out, [
                 'Alaoui', 'Sara', '2012-05-14', 'F', '0600000000', 'sara@example.com',
                 'Casablanca', '6ème A', 'Actif', 'M123456',
+                '3ème année collège', 'Alaoui', 'Karim', '0611223344',
             ], ';');
             fclose($out);
         }, 'modele-eleves.csv', [
@@ -263,6 +301,7 @@ class StudentController extends Controller
                 continue;
             }
 
+            $niveau = $data['niveau_scolaire'] ?? ($data['niveau'] ?? null);
             $payload = [
                 'nom' => $nom,
                 'prenom' => $prenom,
@@ -274,6 +313,9 @@ class StudentController extends Controller
                 'statut' => $data['statut'] ?? 'Actif',
                 'code_massar' => $data['code_massar'] ?? null,
             ];
+            if ($niveau && in_array($niveau, Student::NIVEAUX_SCOLAIRES, true)) {
+                $payload['niveau_scolaire'] = $niveau;
+            }
             if (!empty($data['classe'])) {
                 $cls = $classes->get(mb_strtolower(trim($data['classe'])));
                 if ($cls) {
@@ -291,14 +333,16 @@ class StudentController extends Controller
 
             if ($student) {
                 $student->update($payload);
+                $this->importLinkParent($student, $data, false);
                 $updated++;
             } else {
                 $payload['matricule'] = !empty($data['matricule'])
                     ? $data['matricule']
-                    : 'EL'.str_pad((string) (Student::max('id') + 1), 5, '0', STR_PAD_LEFT);
+                    : Matricule::next($payload['niveau_scolaire'] ?? null);
                 $payload['school_year_id'] = $yearId;
                 $payload['date_inscription'] = now()->toDateString();
-                Student::create($payload);
+                $student = Student::create($payload);
+                $this->importLinkParent($student, $data, true);
                 $created++;
             }
         }
@@ -306,6 +350,29 @@ class StudentController extends Controller
 
         return redirect()->route('students.index')
             ->with('success', __('Import terminé : :created créé(s), :updated mis à jour.', ['created' => $created, 'updated' => $updated]));
+    }
+
+    /**
+     * Excel/CSV import: link the parent (match by phone when given, else create); no parent info = no link/suffix.
+     * Columns: parent_telephone, parent_nom, parent_prenom.
+     */
+    private function importLinkParent(Student $student, array $row, bool $isNew): void
+    {
+        $phone = trim((string) ($row['parent_telephone'] ?? ($row['telephone_parent'] ?? '')));
+        $pnom = trim((string) ($row['parent_nom'] ?? ''));
+        $pprenom = trim((string) ($row['parent_prenom'] ?? ''));
+        if ($phone === '' && $pnom === '') return;
+        if (!$isNew && $student->parents()->exists()) return;
+        $parent = $phone !== '' ? Matricule::findParentByPhone($phone) : null;
+        if (!$parent) {
+            $parent = ParentGuardian::create([
+                'nom' => $pnom !== '' ? $pnom : $student->nom,
+                'prenom' => $pprenom !== '' ? $pprenom : null,
+                'telephone' => $phone !== '' ? $phone : null,
+            ]);
+        }
+        $student->parents()->syncWithoutDetaching([$parent->id]);
+        Matricule::refresh($student->fresh());
     }
 
     /**
@@ -330,28 +397,16 @@ class StudentController extends Controller
     }
 
     /**
-     * Create first mensualité from enrolled subject prices and optional initial payment.
+     * First invoice at registration: parent pays the FULL month; consumed = remaining sessions x session price;
+     * the difference is kept as credit for the next month.
      */
-    private function createInitialMensualite(Student $student, string $paymentStatut, $paymentPaye): void
+    private function createInitialMensualite(Student $student, string $paymentStatut, $paymentPaye, array $remaining): void
     {
         $student->load('subjects');
-        $from = $student->date_inscription ? \Carbon\Carbon::parse($student->date_inscription) : now();
-        $periode = $from->format('Y-m');
-        $b = \App\Services\SessionBilling::breakdown($student->class_id, \App\Services\SessionBilling::studentSubjects($student), $periode, $from);
-        $paye = $paymentStatut === 'Soldé' ? $b['total'] : ($paymentStatut === 'Partiel' ? (float) $paymentPaye : 0);
-        \App\Services\SessionBilling::createInvoice($student, $periode, $from, $paye);
-    }
-
-    /** AJAX: remaining sessions this month + amount due, per subject. */
-    public function billingPreview(Request $request)
-    {
-        $classId = $request->integer('class_id') ?: null;
-        $subjects = [];
-        foreach ((array) $request->input('subjects', []) as $id => $prix) {
-            $subjects[(int) $id] = (float) $prix;
-        }
-        $from = $request->filled('date') ? \Carbon\Carbon::parse($request->input('date')) : now();
-        return response()->json(\App\Services\SessionBilling::breakdown($classId, $subjects, $from->format('Y-m'), $from));
+        $periode = ($student->date_inscription ? \Carbon\Carbon::parse($student->date_inscription) : now())->format('Y-m');
+        $full = SessionBilling::breakdown(SessionBilling::studentSubjects($student), $periode, $remaining)['full'];
+        $cash = $paymentStatut === 'Soldé' ? $full : ($paymentStatut === 'Partiel' ? (float) $paymentPaye : 0);
+        SessionBilling::createInvoice($student, $periode, $remaining, $cash);
     }
 
     public function withdraw(Student $student)

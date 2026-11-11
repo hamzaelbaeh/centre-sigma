@@ -5,13 +5,17 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class Subject extends Model
 {
-    protected $fillable = ['nom','code','niveau','heures_semaine','prix','sessions_per_month'];
+    protected $fillable = ['nom','code','niveau','heures_semaine','prix','sessions_per_week'];
     protected function casts(): array
     {
         return [
             'heures_semaine' => 'decimal:2',
             'prix' => 'decimal:2',
         ];
+    }
+    public function getSessionsPerMonthAttribute(): int
+    {
+        return max(1, (int) ($this->sessions_per_week ?: 2)) * 4;
     }
     public function classes(): BelongsToMany { return $this->belongsToMany(SchoolClass::class, 'class_subject', 'subject_id', 'class_id'); }
     public function teachers(): BelongsToMany { return $this->belongsToMany(Teacher::class); }

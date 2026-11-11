@@ -1,7 +1,7 @@
 @extends('layouts.app')
 @section('title',__('Modifier parent'))
 @section('content')
-<div class="page-head"><div><h1>{{ __('Modifier parent') }}</h1></div><a class="btn btn-ghost" href="{{ route('parents.index') }}">{{ __('Retour') }}</a></div>
+<div class="page-head"><div><h1>{{ __('Modifier parent') }}</h1><div class="sub">{{ __('N° PARENT') }} : <strong class="ltr-num">{{ $parent->numero_pad }}-<a href="#" class="js-children" data-url="{{ route('parents.children',$parent) }}" title="{{ __('Voir la liste des élèves') }}">{{ $parent->children_count }}</a></strong></div></div><a class="btn btn-ghost" href="{{ route('parents.index') }}">{{ __('Retour') }}</a></div>
 <form class="card" method="POST" action="{{ route('parents.update',$parent) }}">@csrf @method('PUT')
 
 <div class="form-row">
@@ -20,4 +20,5 @@
 <div class="form-group"><label>{{ __('Enfants (élèves)') }}</label><div class="checkboxes">@foreach($students as $s)<label><input type="checkbox" name="students[]" value="{{ $s->id }}" @checked(collect(old('students', isset($parent)?$parent->students->pluck('id')->all():[]))->contains($s->id))> {{ $s->full_name }}</label>@endforeach</div></div>
 
 <button class="btn btn-gold" type="submit">{{ __('Enregistrer') }}</button></form>
+@include('parents.partials.children-modal')
 @endsection
