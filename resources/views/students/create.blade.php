@@ -114,9 +114,9 @@
     <div class="form-group">
       <label>{{ __('Statut du paiement') }}</label>
       <select class="form-select" style="width:100%" name="payment_statut" id="payment_statut">
-        <option value="Non payé" @selected(old('payment_statut','Soldé')==='Non payé')>{{ __('Non payé') }}</option>
+        <option value="Non payé" @selected(old('payment_statut','Non payé')==='Non payé')>{{ __('Non payé') }}</option>
         <option value="Partiel" @selected(old('payment_statut')==='Partiel')>{{ __('Partiel') }}</option>
-        <option value="Soldé" @selected(old('payment_statut','Soldé')==='Soldé')>{{ __('Soldé') }}</option>
+        <option value="Soldé" @selected(old('payment_statut','Non payé')==='Soldé')>{{ __('Soldé') }}</option>
       </select>
     </div>
     <div class="form-group" id="payment-paye-group">
